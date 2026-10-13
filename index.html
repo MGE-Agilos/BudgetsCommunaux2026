@@ -201,6 +201,7 @@ window.dash = (function () {
       <div class="bc-tile"><span class="bc-tile-label" data-nl="Inwoners">Habitants</span><span class="bc-tile-value dash-skeleton" id="t-pop" data-source="stats_region" data-field="population">—</span><span class="bc-tile-note" data-nl="bevolking op 1/1/2025">population au 1/1/2025</span></div>
       <div class="bc-tile"><span class="bc-tile-label" data-nl="Exploitatie-uitgaven per inwoner">Dépenses d'exploitation par habitant</span><span class="bc-tile-value dash-skeleton" id="t-dep" data-source="stats_region" data-field="dep_expl_mediane_hab">—</span><span class="bc-tile-note" data-nl="mediaan van de gemeenten, begroting 2026">médiane des communes, budget 2026</span></div>
       <div class="bc-tile"><span class="bc-tile-label" data-nl="Exploitatie-ontvangsten per inwoner">Recettes d'exploitation par habitant</span><span class="bc-tile-value dash-skeleton" id="t-rec" data-source="stats_region" data-field="rec_expl_mediane_hab">—</span><span class="bc-tile-note" data-nl="mediaan van de gemeenten, begroting 2026">médiane des communes, budget 2026</span></div>
+      <div class="bc-tile"><span class="bc-tile-label" data-nl="Gemeenten met een exploitatietekort">Communes en déficit d'exploitation</span><span class="bc-tile-value dash-skeleton" id="t-deficit" data-source="stats_region" data-field="communes_deficit">—</span><span class="bc-tile-note" id="t-deficit-note">—</span></div>
       <div class="bc-tile"><span class="bc-tile-label" data-nl="Totale exploitatie-uitgaven">Dépenses d'exploitation cumulées</span><span class="bc-tile-value dash-skeleton" id="t-total" data-source="stats_region" data-field="dep_expl_total">—</span><span class="bc-tile-note" data-nl="gemeenten met begroting">communes avec budget</span></div>
     </div>
 
@@ -272,6 +273,7 @@ window.dash = (function () {
       <div class="bc-tile"><span class="bc-tile-label" data-nl="Inwoners">Habitants</span><span class="bc-tile-value" id="c-pop" data-source="communes" data-field="population">—</span><span class="bc-tile-note" id="c-pop-note">—</span></div>
       <div class="bc-tile"><span class="bc-tile-label" data-nl="Exploitatie-uitgaven / inw.">Dépenses d'exploitation / hab.</span><span class="bc-tile-value" id="c-dep" data-source="communes" data-field="dep_expl_hab">—</span><span class="bc-tile-note" id="c-dep-note">—</span></div>
       <div class="bc-tile"><span class="bc-tile-label" data-nl="Exploitatie-ontvangsten / inw.">Recettes d'exploitation / hab.</span><span class="bc-tile-value" id="c-rec" data-source="communes" data-field="rec_expl_hab">—</span><span class="bc-tile-note" id="c-rec-note">—</span></div>
+      <div class="bc-tile"><span class="bc-tile-label" data-nl="Exploitatiesaldo 2026">Solde d'exploitation 2026</span><span class="bc-tile-value" id="c-solde" data-source="communes" data-field="solde_expl_total">—</span><span class="bc-tile-note" id="c-solde-note">—</span></div>
       <div class="bc-tile"><span class="bc-tile-label" data-nl="Investeringen / inw.">Investissements / hab.</span><span class="bc-tile-value" id="c-inv" data-source="communes" data-field="dep_inv_hab">—</span><span class="bc-tile-note" id="c-inv-note">—</span></div>
     </div>
 
@@ -394,6 +396,7 @@ window.dash = (function () {
         <li data-nl="Een begroting is “bruikbaar” als haar betrouwbaarheid niet laag is. De opsplitsing naar aard en functie bestaat enkel voor opgesplitste begrotingen; de andere geven alleen totalen.">Un budget est « exploitable » quand sa fiabilité n'est pas faible. Le détail par nature et par fonction n'existe que pour les budgets ventilés ; les autres ne donnent que les totaux.</li>
         <li data-nl="Een kenmerk wijst op een waarschijnlijke druk op de uitgaven of ontvangsten. Het becijfert het effect niet.">Une spécificité signale une pression probable sur les dépenses ou les recettes. Elle ne chiffre pas son effet.</li>
         <li data-nl="OpenStreetMap toont waar een voorziening ligt, niet wie ze financiert.">OpenStreetMap indique où se trouve un équipement, pas qui le finance.</li>
+        <li data-nl="Exploitatiesaldo: in Wallonië en Brussel het resultaat van het eigen dienstjaar van de gewone dienst (met de functionele heffingen), zoals in de samenvattende tabel; in Vlaanderen het exploitatiesaldo van de BBC, dat positief moet zijn om de aflossingen van de schuld te dekken. Een tekort van het eigen dienstjaar kan gedekt zijn door een overschot van vorige dienstjaren.">Solde d'exploitation : en Wallonie et à Bruxelles, résultat de l'exercice propre du service ordinaire (prélèvements fonctionnels compris), comme dans le tableau récapitulatif ; en Flandre, solde d'exploitation BBC, qui doit être positif pour couvrir les remboursements d'emprunts. Un déficit de l'exercice propre peut être couvert par le boni des exercices antérieurs.</li>
         <li data-nl="Het tarief van de aanvullende personenbelasting is een impliciet tarief: ingekohierde gemeentebelasting gedeeld door de staatsbelasting.">Le taux d'additionnel IPP est un taux implicite : impôt communal enrôlé divisé par l'impôt État.</li>
         <li data-nl="De bronnen en betrouwbaarheidslabels van de begrotingen zijn in het Frans.">Les sources et niveaux de fiabilité des budgets sont libellés en français.</li>
       </ul>
@@ -432,6 +435,8 @@ window.dash = (function () {
   S.IND = {
     dep_expl_hab: ["Dépenses d'exploitation / hab.", 'Exploitatie-uitgaven / inw.', '€', 0, 'bud'],
     rec_expl_hab: ["Recettes d'exploitation / hab.", 'Exploitatie-ontvangsten / inw.', '€', 0, 'bud'],
+    solde_expl_hab: ["Solde d'exploitation / hab.", 'Exploitatiesaldo / inw.', '€', 0, 'bud'],
+    solde_expl_pct: ["Solde d'exploitation (% des recettes)", 'Exploitatiesaldo (% van de ontvangsten)', '%', 1, 'bud'],
     dep_inv_hab: ['Investissements / hab.', 'Investeringen / inw.', '€', 0, 'bud'],
     dep_personnel_hab: ['Personnel / hab.', 'Personeel / inw.', '€', 0, 'bud'],
     dep_fonctionnement_hab: ['Fonctionnement / hab.', 'Werking / inw.', '€', 0, 'bud'],
@@ -671,6 +676,9 @@ window.dash = (function () {
         dep_expl_mediane_hab: Math.round(d3.median(ok, (c) => c.dep_expl_hab)),
         rec_expl_mediane_hab: Math.round(d3.median(ok.filter((c) => c.rec_expl_hab != null), (c) => c.rec_expl_hab)),
         dep_expl_total: d3.sum(ok, (c) => c.dep_expl_total),
+        communes_solde: ok.filter((c) => c.solde_expl_total != null && c.solde_expl_total !== '').length,
+        communes_deficit: ok.filter((c) => c.solde_expl_total != null && c.solde_expl_total !== '' && Number(c.solde_expl_total) < 0).length,
+        solde_expl_total: d3.sum(ok, (c) => Number(c.solde_expl_total) || 0),
       };
     }),
   });
@@ -802,13 +810,18 @@ window.dash = (function () {
     fReg.value = S.state.region;
     const st = dash.data('stats_region');
     [['t-communes', 'communes', S.fmt.n0], ['t-budget', 'communes_budget', S.fmt.n0], ['t-pop', 'population', S.fmt.n0],
-      ['t-dep', 'dep_expl_mediane_hab', S.fmt.eur], ['t-rec', 'rec_expl_mediane_hab', S.fmt.eur], ['t-total', 'dep_expl_total', S.fmt.eurc]].forEach(([id, f, fmt]) => {
+      ['t-dep', 'dep_expl_mediane_hab', S.fmt.eur], ['t-rec', 'rec_expl_mediane_hab', S.fmt.eur], ['t-total', 'dep_expl_total', S.fmt.eurc], ['t-deficit', 'communes_deficit', S.fmt.n0]].forEach(([id, f, fmt]) => {
       const el = document.getElementById(id);
       el.dataset.where = 'region=' + S.state.region;
       if (st.status === 'ok') {
         const row = st.data.find((r) => r.region === S.state.region);
         el.textContent = fmt(row[f]);
         el.classList.remove('dash-skeleton');
+        if (id === 't-deficit') {
+          const dn = document.getElementById('t-deficit-note');
+          dn.textContent = L(`sur ${S.fmt.n0(row.communes_solde)} budgets · solde cumulé ${S.fmt.signedEur(row.solde_expl_total)}`, `op ${S.fmt.n0(row.communes_solde)} begrotingen · totaal saldo ${S.fmt.signedEur(row.solde_expl_total)}`);
+          el.style.color = row.communes_deficit > 0 ? 'var(--color-bad)' : '';
+        }
         if (id === 't-budget') document.getElementById('t-budget-note').textContent = L(`${S.fmt.n0(100 * row.population_budget / row.population)} % de la population`, `${S.fmt.n0(100 * row.population_budget / row.population)} % van de bevolking`);
       } else if (st.status === 'error') { el.textContent = '—'; el.classList.remove('dash-skeleton'); }
     });
@@ -1143,6 +1156,17 @@ window.dash = (function () {
     document.getElementById('c-dep-note').textContent = note('dep_expl_hab');
     document.getElementById('c-rec-note').textContent = note('rec_expl_hab');
     document.getElementById('c-inv-note').textContent = note('dep_inv_hab');
+    const cs = document.getElementById('c-solde'), csn = document.getElementById('c-solde-note');
+    cs.dataset.where = where;
+    if (c.solde_expl_total != null) {
+      cs.textContent = S.fmt.signedEur(c.solde_expl_total);
+      cs.style.color = c.solde_expl_total < 0 ? 'var(--color-bad)' : 'var(--color-ok)';
+      const ms = med('solde_expl_pct');
+      csn.textContent = (c.solde_expl_total < 0 ? L('déficit', 'tekort') : L('boni', 'overschot')) + ' · ' + S.fmtInd('solde_expl_pct', c.solde_expl_pct) + L(' des recettes', ' van de ontvangsten') + (ms != null ? L(' · comparables ', ' · vergelijkbaar ') + S.fmtInd('solde_expl_pct', ms) : '');
+    } else {
+      cs.textContent = '—'; cs.style.color = '';
+      csn.textContent = c.solde_a_verifier ? L('à vérifier : détail des recettes incomplet', 'na te kijken: detail van de ontvangsten onvolledig') : L('non disponible', 'niet beschikbaar');
+    }
 
     // specificities
     const box = document.getElementById('c-spec'); box.replaceChildren();
