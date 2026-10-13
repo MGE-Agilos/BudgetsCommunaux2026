@@ -1,0 +1,42 @@
+/* Panneau du chatbot (version GitHub Pages). Couleurs et tailles : variables de thème de la page. */
+.bcc-panel { position: fixed; top: 0; right: 0; bottom: 0; z-index: 60; width: min(440px, 100vw); box-sizing: border-box;
+  display: flex; flex-direction: column; gap: 8px; background: var(--color-panel); color: var(--color-fg);
+  border-left: 1px solid var(--color-border-line); box-shadow: var(--cds-shadow-popover); font-size: var(--cds-font-size-body);
+  padding: calc(env(safe-area-inset-top, 0px) + 12px) 16px calc(env(safe-area-inset-bottom, 0px) + 12px); }
+.bcc-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.bcc-head-tools { flex-basis: 100%; display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+.bcc-title { flex: 1 1 auto; font-size: var(--cds-font-size-heading); }
+.bcc-model { font: inherit; font-size: var(--cds-font-size-caption); }
+.bcc-link { background: none; border: 0; padding: 0; color: var(--s1); font: inherit; font-size: var(--cds-font-size-caption); text-decoration: underline; cursor: pointer; }
+.bcc-close { background: none; border: 0; padding: 0 4px; font-size: 1.5rem; line-height: 1; color: var(--color-fg-muted); cursor: pointer; }
+.bcc-note, .bcc-keymsg { margin: 0; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.bcc-key { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.bcc-key input { flex: 1 1 12rem; min-width: 0; font: inherit; padding: 6px 8px; }
+.bcc-key .bcc-keymsg { flex-basis: 100%; }
+.bcc-log { flex: 1 1 auto; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+.bcc-msg { padding: 8px 10px; border-radius: var(--cds-radius); line-height: 1.45; overflow-wrap: anywhere; }
+.bcc-user { align-self: flex-end; max-width: 85%; white-space: pre-wrap; background: var(--color-bg); border: 1px solid var(--color-border-line); }
+.bcc-bot { align-self: stretch; padding-inline: 0; }
+.bcc-body p { margin: 0 0 6px; }
+.bcc-body ul, .bcc-body ol { margin: 0 0 6px; padding-left: 1.2rem; }
+.bcc-body code { font-size: .9em; }
+.bcc-tablewrap { overflow-x: auto; margin: 0 0 6px; }
+.bcc-body table { border-collapse: collapse; font-size: var(--cds-font-size-caption); }
+.bcc-body th, .bcc-body td { border-bottom: 1px solid var(--color-border-line); padding: 3px 8px 3px 0; text-align: left; font-variant-numeric: tabular-nums; }
+.bcc-tools { margin-bottom: 4px; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.bcc-err { margin-top: 6px; font-size: var(--cds-font-size-caption); color: var(--color-bad); }
+.bcc-examples { display: flex; flex-direction: column; gap: 6px; }
+.bcc-ex { text-align: left; font: inherit; font-size: var(--cds-font-size-caption); padding: 6px 8px; color: inherit;
+  background: var(--color-bg); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); cursor: pointer; }
+.bcc-ex:hover { border-color: var(--color-fg-muted); }
+.bcc-form { display: flex; gap: 8px; align-items: flex-end; }
+.bcc-form textarea { flex: 1 1 auto; min-width: 0; min-height: 2.6rem; font: inherit; padding: 6px 8px; resize: vertical; }
+.bcc-panel button:disabled, .bcc-panel textarea:disabled { opacity: .6; cursor: default; }
+.bcc-help { flex: 1 1 auto; min-height: 0; overflow-y: auto; font-size: var(--cds-font-size-caption); line-height: 1.5; }
+.bcc-help p { margin: 0 0 8px; }
+.bcc-help h3 { margin: 14px 0 6px; font-size: var(--cds-font-size-body); }
+.bcc-help h4 { margin: 10px 0 4px; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); text-transform: uppercase; letter-spacing: .03em; }
+.bcc-help ul { margin: 0 0 6px; padding-left: 1.1rem; }
+.bcc-help-qs { display: flex; flex-direction: column; gap: 6px; }
+.bcc-guide { display: inline-block; margin: 0 0 4px; color: var(--s1); font-weight: 600; }
+.bcc-guidelink { text-decoration: none; display: inline-block; }

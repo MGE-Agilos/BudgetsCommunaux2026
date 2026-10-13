@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Gebruikersgids – Gemeentebegrotingen 2026</title>
+<meta name="description" content="Guide d'utilisation du tableau de bord des budgets communaux 2026 et de son assistant, avec un scénario de démonstration. FR / NL.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500&display=swap">
+<style>
+:root {
+  --font-sans: "Source Sans 3", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --bg: #f6f6f3; --panel: #ffffff; --fg: #1f2328; --muted: #5d636b; --line: #e1e2dd; --accent: #2f6db5; --warn: #a35c00; --ai: #6b5bb5;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --bg: #15171a; --panel: #1d2024; --fg: #e8e9ea; --muted: #a2a8b0; --line: #2f3339; --accent: #6ea4e8; --warn: #e0a24a; --ai: #9b8ce6; color-scheme: dark; }
+}
+[hidden] { display: none !important; }
+html, body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-sans); font-size: 16px; line-height: 1.55; }
+.wrap { max-width: 880px; margin: 0 auto; padding: calc(env(safe-area-inset-top, 0px) + 24px) 20px calc(env(safe-area-inset-bottom, 0px) + 56px); }
+.top { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: .9rem; }
+.top a, main a { color: var(--accent); }
+.lang button { font: inherit; font-size: .85rem; padding: 3px 10px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); border-radius: 6px; cursor: pointer; }
+.lang button[aria-pressed="true"] { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+h1 { font-family: var(--font-serif); font-weight: 500; font-size: 2rem; line-height: 1.2; margin: 16px 0 8px; }
+h2 { font-family: var(--font-serif); font-weight: 500; font-size: 1.45rem; margin: 44px 0 10px; padding-top: 8px; border-top: 1px solid var(--line); }
+h3 { font-size: 1.05rem; margin: 22px 0 6px; }
+.lede { color: var(--muted); font-size: 1.05rem; margin: 0 0 8px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; margin: 12px 0; }
+.toc ol { margin: 0; columns: 2 16rem; column-gap: 24px; }
+.toc li { break-inside: avoid; }
+ol, ul { padding-left: 1.3rem; }
+li { margin: 4px 0; }
+dl { margin: 8px 0; }
+dt { font-weight: 600; margin-top: 10px; }
+dd { margin: 2px 0 0 0; }
+.ui { font-weight: 600; }
+code { overflow-wrap: anywhere; }
+.steps { counter-reset: step; }
+.step { counter-increment: step; position: relative; padding-left: 2.6rem; }
+.step::before { content: counter(step); position: absolute; left: 0; top: 18px; width: 1.8rem; height: 1.8rem; border-radius: 50%; background: var(--fg); color: var(--bg); font-weight: 600; font-size: .9rem; display: grid; place-items: center; }
+.step .card { margin: 10px 0 0; }
+.tag { display: inline-block; font-size: .75rem; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; padding: 1px 8px; border-radius: 999px; border: 1px solid currentColor; margin-bottom: 6px; }
+.tag.screen { color: var(--accent); } .tag.ai { color: var(--ai); }
+.do { margin: 0 0 6px; }
+.q { font-weight: 600; margin: 0 0 8px; }
+.q::before { content: "« "; color: var(--muted); } .q::after { content: " »"; color: var(--muted); }
+[lang="nl"] .q::before { content: "“"; } [lang="nl"] .q::after { content: "”"; }
+.ask { display: inline-block; font-size: .85rem; padding: 4px 10px; border: 1px solid var(--line); border-radius: 6px; color: var(--fg) !important; text-decoration: none; background: var(--bg); }
+.ask:hover { border-color: var(--muted); }
+.expect { margin: 10px 0 0; font-size: .95rem; }
+.say { margin: 8px 0 0; font-size: .95rem; color: var(--muted); font-style: italic; }
+.note { font-size: .9rem; color: var(--muted); }
+.warn { border-left: 3px solid var(--warn); padding-left: 12px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 12px; }
+.grid .card { margin: 0; }
+.grid h3 { margin-top: 0; }
+.grid ul { margin: 0; }
+figure { margin: 14px 0; }
+figure img, img.thumb { display: block; max-width: 100%; height: auto; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); }
+figcaption { font-size: .88rem; color: var(--muted); margin-top: 6px; }
+.figs { margin: 16px 0 0; }
+img.thumb { margin-top: 12px; }
+footer { margin-top: 48px; font-size: .85rem; color: var(--muted); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <a href="index.html" id="back">← <span data-l="fr">Retour au tableau de bord</span><span data-l="nl">Terug naar het dashboard</span></a>
+    <div class="lang" role="group" aria-label="Langue / Taal"><button type="button" data-set="fr">FR</button> <button type="button" data-set="nl">NL</button></div>
+  </div>
+
+  <!-- ============================== FRANÇAIS ============================== -->
+  <main lang="fr" data-l="fr">
+    <h1>Guide d'utilisation</h1>
+    <p class="lede">Le tableau de bord « Budgets communaux 2026 » rassemble les budgets 2026 des 565 communes belges (limites de 2025), les facteurs qui expliquent leurs écarts, l'impact de la réduction du Gemeentefonds en Flandre et un outil de simulation. Un assistant conversationnel permet de l'interroger en français ou en néerlandais.</p>
+    <nav class="toc card" aria-label="Sommaire"><ol>
+      <li><a href="#fr-nav">Prise en main</a></li>
+      <li><a href="#fr-apercu">Vue d'ensemble</a></li>
+      <li><a href="#fr-gf">Gemeentefonds (Flandre)</a></li>
+      <li><a href="#fr-commune">Analyse d'une commune</a></li>
+      <li><a href="#fr-sim">Simulation et scénarios</a></li>
+      <li><a href="#fr-methode">Méthode</a></li>
+      <li><a href="#fr-ai">Assistant</a></li>
+      <li><a href="#fr-scenario">Scénario de démo : Malines</a></li>
+      <li><a href="#fr-limits">Bonnes pratiques et limites</a></li>
+    </ol></nav>
+
+    <h2 id="fr-nav">1. Prise en main</h2>
+    <dl>
+      <dt>Langue</dt><dd>Le tableau de bord s'ouvre en néerlandais. Les boutons <span class="ui">FR</span> / <span class="ui">NL</span> en haut à droite changent la langue ; ajoutez <code>?lang=fr</code> à l'adresse pour l'ouvrir en français.</dd>
+      <dt>Barre fixe</dt><dd>Elle reste visible en faisant défiler la page. Elle contient les cinq onglets, le bouton <span class="ui">💬 Assistant</span>, la commune choisie et la recherche.</dd>
+      <dt>Rechercher une commune</dt><dd>Tapez au moins deux lettres du nom français ou néerlandais (Gand ou Gent), puis choisissez dans la liste avec la souris ou les flèches et Entrée. La commune devient la « commune choisie » de tous les onglets.</dd>
+      <dt>Commune choisie</dt><dd>Son nom et sa région s'affichent dans la barre, avec des raccourcis vers <span class="ui">Analyse</span>, <span class="ui">Gemeentefonds</span> (communes flamandes) et <span class="ui">Simuler</span>.</dd>
+      <dt>Aide contextuelle</dt><dd>Les petits boutons <span class="ui">?</span> à côté des titres expliquent un terme ou un graphique (AFM, BBR, rang régional, communes comparables…).</dd>
+      <dt>Infobulles</dt><dd>Survolez un point, une barre ou une commune sur la carte pour voir sa valeur exacte.</dd>
+    </dl>
+
+        <div class="figs"><figure><a href="guide_img/fr/barre.jpg" target="_blank" rel="noopener"><img src="guide_img/fr/barre.jpg" alt="Capture d'écran : La barre fixe : onglets, assistant, guide, commune choisie et ses raccourcis, recherche." loading="lazy"></a><figcaption>La barre fixe : onglets, assistant, guide, commune choisie et ses raccourcis, recherche.</figcaption></figure></div>
+
+    <h2 id="fr-apercu">2. Vue d'ensemble</h2>
+    <p>Elle compare les communes entre elles, pour toute la Belgique ou pour une région.</p>
+    <dl>
+      <dt>Filtres</dt><dd><span class="ui">Région</span> restreint toute la page ; <span class="ui">Indicateur affiché</span> choisit ce que montrent la carte, la distribution et le classement (dépenses par habitant, fiscalité, revenus, population, équipements…).</dd>
+      <dt>Chiffres clés</dt><dd>Nombre de communes, budgets exploitables, habitants, médiane et total des dépenses d'exploitation, communes en déficit. Une tuile cliquable met à jour la carte avec l'indicateur correspondant.</dd>
+      <dt>Carte</dt><dd>La couleur donne le rang de la commune dans sa région (clair = bas, foncé = haut). Cliquez sur une commune pour l'analyser. Zoom avec <span class="ui">+</span> / <span class="ui">−</span>, Ctrl + molette ou en pinçant ; <span class="ui">Tout</span> recadre la Belgique, <span class="ui">Commune choisie</span> centre la commune.</dd>
+      <dt>Distribution par région</dt><dd>Chaque point est une commune ; le trait vertical marque la médiane de la région.</dd>
+      <dt>Croiser deux dimensions</dt><dd>Nuage de points avec un <span class="ui">Axe horizontal</span> et un <span class="ui">Axe vertical</span> au choix (par exemple revenu par habitant et dépenses par habitant). Taille des points : population ; couleur : région. Zoom comme sur la carte.</dd>
+      <dt>Structure du budget d'exploitation</dt><dd>Moyenne par habitant de chaque nature de dépense et de recette (personnel, fonctionnement, transferts, dette, fiscalité, dotations…), par région.</dd>
+      <dt>Dépenses par fonction</dt><dd>Moyenne par habitant de chaque groupe de fonctions (enseignement, sécurité, action sociale…), pour les budgets ventilés par fonction.</dd>
+      <dt>Classement</dt><dd>Tableau de toutes les communes : triez en cliquant sur un en-tête, filtrez avec <span class="ui">Rechercher</span>, cliquez sur une ligne pour ouvrir la commune.</dd>
+    </dl>
+
+        <div class="figs"><figure><a href="guide_img/fr/apercu_tuiles.jpg" target="_blank" rel="noopener"><img src="guide_img/fr/apercu_tuiles.jpg" alt="Capture d'écran : Les chiffres clés, cliquables." loading="lazy"></a><figcaption>Les chiffres clés, cliquables.</figcaption></figure><figure><a href="guide_img/fr/apercu_carte.jpg" target="_blank" rel="noopener"><img src="guide_img/fr/apercu_carte.jpg" alt="Capture d'écran : La carte : couleur = rang de la commune dans sa région ; zoom et recentrage en haut." loading="lazy"></a><figcaption>La carte : couleur = rang de la commune dans sa région ; zoom et recentrage en haut.</figcaption></figure><figure><a href="guide_img/fr/apercu_nuage.jpg" target="_blank" rel="noopener"><img src="guide_img/fr/apercu_nuage.jpg" alt="Capture d'écran : Croiser deux dimensions : chaque point est une commune, la taille donne la population." loading="lazy"></a><figcaption>Croiser deux dimensions : chaque point est une commune, la taille donne la population.</figcaption></figure><figure><a href="guide_img/fr/apercu_classement.jpg" target="_blank" rel="noopener"><img src="guide_img/fr/apercu_classement.jpg" alt="Capture d'écran : Le classement : tri par colonne, recherche, clic pour ouvrir une commune." loading="lazy"></a><figcaption>Le classement : tri par colonne, recherche, clic pour ouvrir une commune.</figcaption></figure></div>
+
+    <h2 id="fr-gf">3. Gemeentefonds (Flandre)</h2>
+    <p>Le gouvernement flamand ramène la croissance annuelle du Gemeentefonds de 3,5 % à 1 % en 2027, 1,25 % en 2028 et 1,5 % en 2029. L'onglet compare, pour chaque commune flamande, le Gemeentefonds prévu dans son plan pluriannuel 2026-2031 et les montants officiels d'octobre 2026.</p>
+    <dl>
+      <dt>Chiffres clés</dt><dd>Écart cumulé 2027-2031 entre plans et montants officiels, perte par rapport à une croissance de 3,5 %, plans pas encore adaptés, communes avec une AFM 2031 négative ou un BBR négatif après la réduction. Cliquer sur une tuile filtre le tableau.</dd>
+      <dt>Gemeentefonds de toutes les communes flamandes</dt><dd>Par année : montant prévu dans les plans, montant officiel et ce qu'il aurait été à +3,5 %.</dd>
+      <dt>Communes avec un BBR négatif, par année</dt><dd>Avant et après la réduction. Le BBR doit être positif chaque année ; l'AFM doit l'être la dernière année du plan (2031).</dd>
+      <dt>Impact par commune</dt><dd>Filtres <span class="ui">Toutes les communes</span>, <span class="ui">AFM 2031 négative après réduction</span>, <span class="ui">BBR négatif après réduction</span>, <span class="ui">Plan pas encore adapté</span>, <span class="ui">Plan déjà adapté</span> ; filtre par province et recherche. Triez par écart, écart par habitant, AFM ou BBR. Un écart négatif signifie que le plan attend plus que les montants officiels.</dd>
+      <dt>Détail d'une commune</dt><dd>Cliquez sur une ligne : trajectoire 2026-2031 du Gemeentefonds, AFM et BBR avant et après, et dette du plan (nouveaux emprunts, remboursements, intérêts). <span class="ui">Simuler avec la réduction 2027</span> ouvre la simulation avec l'écart 2027 comme recette en moins.</dd>
+    </dl>
+
+        <div class="figs"><figure><a href="guide_img/fr/gf_tuiles.jpg" target="_blank" rel="noopener"><img src="guide_img/fr/gf_tuiles.jpg" alt="Capture d'écran : Les chiffres clés de la réduction du Gemeentefonds pour la Flandre." loading="lazy"></a><figcaption>Les chiffres clés de la réduction du Gemeentefonds pour la Flandre.</figcaption></figure><figure><a href="guide_img/fr/gf_total.jpg" target="_blank" rel="noopener"><img src="guide_img/fr/gf_total.jpg" alt="Capture d'écran : Gemeentefonds de toutes les communes flamandes : plans, montants officiels et trajectoire à 3,5 %." loading="lazy"></a><figcaption>Gemeentefonds de toutes les communes flamandes : plans, montants officiels et trajectoire à 3,5 %.</figcaption></figure><figure><a href="guide_img/fr/gf_tableau.jpg" target="_blank" rel="noopener"><img src="guide_img/fr/gf_tableau.jpg" alt="Capture d'écran : Impact par commune, filtré sur « Mechelen »." loading="lazy"></a><figcaption>Impact par commune, filtré sur « Mechelen ».</figcaption></figure><figure><a href="guide_img/fr/gf_commune.jpg" target="_blank" rel="noopener"><img src="guide_img/fr/gf_commune.jpg" alt="Capture d'écran : Le détail 2026-2031 de Malines : Gemeentefonds, AFM, BBR et dette du plan." loading="lazy"></a><figcaption>Le détail 2026-2031 de Malines : Gemeentefonds, AFM, BBR et dette du plan.</figcaption></figure></div>
+
+    <h2 id="fr-commune">4. Analyse d'une commune</h2>
+    <p>Elle explique la position de la commune choisie face aux autres communes de sa région.</p>
+    <dl>
+      <dt>Spécificités</dt><dd>Facteurs structurels où la commune se distingue (taille, territoire, richesse, âge, tourisme, équipements rares…), avec leur effet attendu sur les dépenses et les recettes. Ce sont des pressions probables, pas des montants. Les observations « Budget 2026 » décrivent un résultat, pas une cause.</dd>
+      <dt>Communes comparables</dt><dd>Communes de la même région, au budget exploitable, les plus proches sur les dimensions cochées (taille, territoire, richesse, âge, activité économique, base immobilière, tourisme). Changez les dimensions ou le nombre de communes pour changer le groupe de comparaison.</dd>
+      <dt>Où la commune dépense plus, où elle perçoit moins</dt><dd>Les plus grands écarts, en euros par habitant, par rapport à la médiane des comparables.</dd>
+      <dt>Dépenses et recettes par habitant face aux comparables</dt><dd>Barre : de 25 % à 75 % des comparables ; trait : médiane ; point : la commune ; losange : la simulation en cours.</dd>
+      <dt>Dépenses par fonction face aux comparables</dt><dd>Même lecture, par groupe de fonctions.</dd>
+      <dt>Profil de la commune</dt><dd>Rang dans la région (0 = la plus basse, 100 = la plus haute) sur les principales dimensions ; les traits gris montrent les comparables.</dd>
+    </dl>
+
+        <div class="figs"><figure><a href="guide_img/fr/commune_specificites.jpg" target="_blank" rel="noopener"><img src="guide_img/fr/commune_specificites.jpg" alt="Capture d'écran : Les spécificités de Malines, en quatre colonnes : pressions à la dépense, atouts et freins pour les recettes, observations sur le budget 2026." loading="lazy"></a><figcaption>Les spécificités de Malines, en quatre colonnes : pressions à la dépense, atouts et freins pour les recettes, observations sur le budget 2026.</figcaption></figure><figure><a href="guide_img/fr/commune_comparables.jpg" target="_blank" rel="noopener"><img src="guide_img/fr/commune_comparables.jpg" alt="Capture d'écran : Les communes comparables et les dimensions qui les définissent." loading="lazy"></a><figcaption>Les communes comparables et les dimensions qui les définissent.</figcaption></figure><figure><a href="guide_img/fr/commune_depenses.jpg" target="_blank" rel="noopener"><img src="guide_img/fr/commune_depenses.jpg" alt="Capture d'écran : Dépenses par habitant face aux comparables : barre de 25 % à 75 %, trait = médiane, point = la commune." loading="lazy"></a><figcaption>Dépenses par habitant face aux comparables : barre de 25 % à 75 %, trait = médiane, point = la commune.</figcaption></figure></div>
+
+    <h2 id="fr-sim">5. Simulation et scénarios</h2>
+    <p>La simulation fait varier le budget d'exploitation 2026 de la commune choisie. Le résultat s'affiche tout de suite dans le bandeau (solde 2026, solde simulé, écart, dépenses et recettes par habitant) et sur la page Analyse (losanges).</p>
+    <dl>
+      <dt>Commune simulée</dt><dd><span class="ui">Changer de commune</span> ouvre l'analyse pour en choisir une autre ; <span class="ui">Remettre à zéro</span> efface tous les leviers.</dd>
+      <dt>Leviers</dt><dd>Un curseur et un champ par poste : personnel, fonctionnement, dotations police, secours et CPAS, autres transferts, dette, taxes, tarifs, dotations régionales, population (en %). En Flandre, le taux d'APB (en %) et les centimes additionnels OOV utilisent les rendements officiels du plan ; en Wallonie et à Bruxelles, le taux d'additionnel IPP. La base de chaque levier est affichée dessous.</dd>
+      <dt>Hypothèses rapides</dt><dd>Boutons pré-remplis, à ajuster : <span class="ui">Indexation des salaires +2 %</span>, <span class="ui">Énergie : fonctionnement +5 %</span>, <span class="ui">Nouvelle piscine</span>, <span class="ui">Dotation police +5 %</span>, <span class="ui">Réduction du Gemeentefonds 2027</span> (Flandre), <span class="ui">Aligner les dépenses sur la médiane des pairs</span>.</dd>
+      <dt>Lignes ajoutées</dt><dd>Un projet, une taxe nouvelle ou une économie : libellé, dépense ou recette, montant annuel en euros.</dd>
+      <dt>Résultats</dt><dd>Tableau du budget d'exploitation 2026 et simulé, poste par poste, et position face aux communes comparables.</dd>
+      <dt>Scénarios</dt><dd>Donnez un nom puis <span class="ui">Enregistrer le scénario</span>. Cochez plusieurs scénarios pour les comparer côte à côte ; <span class="ui">Charger</span> les rouvre. Ils restent dans ce navigateur : <span class="ui">Exporter (fichier)</span> ou <span class="ui">Copier</span> pour les transmettre, <span class="ui">Importer</span> pour les reprendre ailleurs.</dd>
+    </dl>
+
+        <div class="figs"><figure><a href="guide_img/fr/sim_bandeau.jpg" target="_blank" rel="noopener"><img src="guide_img/fr/sim_bandeau.jpg" alt="Capture d'écran : Le bandeau de résultat de la simulation." loading="lazy"></a><figcaption>Le bandeau de résultat de la simulation.</figcaption></figure><figure><a href="guide_img/fr/sim_leviers.jpg" target="_blank" rel="noopener"><img src="guide_img/fr/sim_leviers.jpg" alt="Capture d'écran : Les leviers, les hypothèses rapides et les lignes ajoutées (ici avec la réduction 2027 et l'APB à 7 %)." loading="lazy"></a><figcaption>Les leviers, les hypothèses rapides et les lignes ajoutées (ici avec la réduction 2027 et l'APB à 7 %).</figcaption></figure><figure><a href="guide_img/fr/sim_scenarios.jpg" target="_blank" rel="noopener"><img src="guide_img/fr/sim_scenarios.jpg" alt="Capture d'écran : Deux scénarios enregistrés et comparés côte à côte." loading="lazy"></a><figcaption>Deux scénarios enregistrés et comparés côte à côte.</figcaption></figure></div>
+
+    <h2 id="fr-methode">6. Méthode</h2>
+    <p>L'onglet décrit les sources (BBC-analysetool et Tool algemene financiering en Flandre, Bruxelles Pouvoirs Locaux, budgets et synthèses eComptes publiés par les communes wallonnes, Statbel, OpenStreetMap), la manière de lire les indicateurs et les hypothèses de la simulation.</p>
+
+    <h2 id="fr-ai">7. Assistant</h2>
+    <p>L'assistant répond aux questions en s'appuyant uniquement sur les chiffres du tableau de bord. Il peut aussi ouvrir un onglet ou une commune et lancer une simulation, enregistrée comme scénario.</p>
+    <ol>
+      <li><b>Créez une clé API</b> sur console.anthropic.com : <i>Settings → Workspaces</i>, choisissez ou créez un workspace (par exemple « Démo budgets », avec une limite de dépense), puis <i>API Keys → Create Key</i>. La clé doit appartenir à un workspace.</li>
+      <li>Cliquez sur <span class="ui">💬 Assistant</span>, collez la clé dans le champ en haut du panneau, puis <span class="ui">Enregistrer</span>. Elle reste dans l'onglet du navigateur, part directement chez Anthropic et disparaît à la fermeture de l'onglet ; <span class="ui">Oublier la clé</span> l'efface tout de suite.</li>
+      <li>Posez une question (Entrée pour envoyer, Maj+Entrée pour aller à la ligne) ou cliquez sur un exemple du <span class="ui">Mode d'emploi</span>.</li>
+    </ol>
+    <p>Dans le panneau : le sélecteur de modèle (Sonnet 5.5 par défaut, rapide, environ 1 à 3 centimes par réponse ; Opus 5.5, plus précis et environ deux fois plus cher), <span class="ui">Nouvelle conversation</span>, le bouton de langue et la touche Échap pour fermer. L'assistant garde le fil de la conversation : « cette commune » désigne la commune choisie.</p>
+    <p class="note warn">Ne collez jamais la clé dans une conversation, ni ici ni dans un autre chatbot. Si cela arrive, révoquez-la dans la Console et créez-en une nouvelle.</p>
+
+        <div class="figs"><figure><a href="guide_img/fr/assistant_aide.jpg" target="_blank" rel="noopener"><img src="guide_img/fr/assistant_aide.jpg" alt="Capture d'écran : Le panneau de l'assistant avec son mode d'emploi." loading="lazy"></a><figcaption>Le panneau de l'assistant avec son mode d'emploi.</figcaption></figure><figure><a href="guide_img/fr/assistant_reponse.jpg" target="_blank" rel="noopener"><img src="guide_img/fr/assistant_reponse.jpg" alt="Capture d'écran : Une réponse de l'assistant à côté de l'application (exemple)." loading="lazy"></a><figcaption>Une réponse de l'assistant à côté de l'application (exemple).</figcaption></figure></div>
+
+    <h2 id="fr-scenario">8. Scénario de démo : Malines face à la réduction du Gemeentefonds</h2>
+    <p>Situation : vous rencontrez l'échevin des finances de Malines. En une quinzaine de minutes, vous montrez l'enjeu pour la Flandre, chiffrez l'impact pour Malines, l'expliquez et testez des pistes. Les étapes <span class="tag screen">Écran</span> se font à la main ; les étapes <span class="tag ai">Assistant</span> ont un bouton qui ouvre la question dans le panneau, prête à être envoyée.</p>
+    <div class="steps">
+      <div class="step"><div class="card"><span class="tag screen">Écran</span>
+        <p class="do">Ouvrez l'onglet <span class="ui">Gemeentefonds (Flandre)</span> et commentez les chiffres clés.</p>
+        <p class="expect"><b>À l'écran :</b> écart cumulé 2027-2031 d'environ −1,02 Md€ ; 283 plans sur 285 pas encore adaptés ; 71 communes avec une AFM 2031 négative après la réduction (aucune avant) ; 203 communes avec un BBR négatif au moins une année (62 avant).</p>
+        <p class="say">À dire : « La réduction n'est pas un détail : plus de deux communes flamandes sur trois voient leur BBR passer sous zéro. »</p>
+      
+        <img class="thumb" src="guide_img/fr/gf_tuiles.jpg" alt="Capture d'écran : Les chiffres clés de la réduction du Gemeentefonds pour la Flandre." loading="lazy">
+      </div></div>
+      <div class="step"><div class="card"><span class="tag screen">Écran</span>
+        <p class="do">Dans <span class="ui">Impact par commune</span>, tapez « Mechelen » dans la recherche et cliquez sur la ligne.</p>
+        <p class="expect"><b>À l'écran :</b> Malines perd environ 20,3 M€ sur 2027-2031 (−227 € par habitant, 10<sup>e</sup> plus forte perte par habitant de Flandre). Son AFM 2031 reste positive (12,1 M€ → 7,1 M€), mais son BBR 2031 passe de 0,5 M€ à −20,5 M€ et devient négatif dès 2026.</p>
+        <p class="say">À dire : « La norme d'AFM tient encore, celle du BBR non : le plan pluriannuel devra être revu. »</p>
+      
+        <img class="thumb" src="guide_img/fr/gf_tableau.jpg" alt="Capture d'écran : Impact par commune, filtré sur « Mechelen »." loading="lazy">
+      </div></div>
+      <div class="step"><div class="card"><span class="tag ai">Assistant</span>
+        <p class="q">Résume en trois points l'impact de la réduction du Gemeentefonds pour Malines, année par année.</p>
+        <a class="ask" data-q>Poser dans l'assistant →</a>
+        <p class="expect"><b>Attendu :</b> les écarts annuels (de −0,7 M€ en 2026 à −5,0 M€ en 2031), l'AFM et le BBR avant et après, en une réponse courte. Montrez qu'on obtient la synthèse sans quitter l'écran.</p>
+      </div></div>
+      <div class="step"><div class="card"><span class="tag screen">Écran</span>
+        <p class="do">Cliquez sur <span class="ui">Analyse</span> dans la barre fixe. Parcourez les spécificités, les communes comparables et « Où la commune dépense plus, où elle perçoit moins ».</p>
+        <p class="expect"><b>À l'écran :</b> les facteurs structurels de Malines et son budget par habitant (3 085 € de dépenses d'exploitation) face à des communes flamandes au profil semblable.</p>
+      </div></div>
+      <div class="step"><div class="card"><span class="tag ai">Assistant</span>
+        <p class="q">Pourquoi Malines dépense-t-elle 3 085 € par habitant ? Quelles spécificités pèsent sur son budget ?</p>
+        <a class="ask" data-q>Poser dans l'assistant →</a>
+        <p class="expect"><b>Attendu :</b> les principales spécificités, présentées comme des pressions probables, et les postes qui s'écartent le plus de la médiane flamande.</p>
+      </div></div>
+      <div class="step"><div class="card"><span class="tag screen">Écran</span>
+        <p class="do">Cliquez sur <span class="ui">Simuler</span>, puis sur l'hypothèse rapide <span class="ui">Réduction du Gemeentefonds 2027</span>. Nommez le scénario « Réduction 2027 » et enregistrez-le.</p>
+        <p class="expect"><b>À l'écran :</b> une ligne de recette en moins d'environ 2,2 M€ ; le solde d'exploitation passe d'environ 15,6 M€ à 13,4 M€.</p>
+      </div></div>
+      <div class="step"><div class="card"><span class="tag screen">Écran</span>
+        <p class="do">Sans remettre à zéro, réglez le levier <span class="ui">Taux additionnel IPP (APB)</span> sur 7,0. Enregistrez sous « Réduction 2027 + APB 7 % », puis cochez les deux scénarios pour les comparer.</p>
+        <p class="expect"><b>À l'écran :</b> +0,5 point d'APB rapporte environ 2,84 M€ par an et compense la perte de 2027 ; le tableau des scénarios montre les deux soldes côte à côte.</p>
+      
+        <img class="thumb" src="guide_img/fr/sim_scenarios.jpg" alt="Capture d'écran : Deux scénarios enregistrés et comparés côte à côte." loading="lazy">
+      </div></div>
+      <div class="step"><div class="card"><span class="tag ai">Assistant</span>
+        <p class="q">Quelle hausse de l'APB compenserait à elle seule la perte annuelle moyenne de Gemeentefonds de Malines entre 2027 et 2031 ?</p>
+        <a class="ask" data-q>Poser dans l'assistant →</a>
+        <p class="expect"><b>Attendu :</b> une perte moyenne d'environ 4,1 M€ par an, rapportée aux 5,7 M€ que rapporte 1 point d'APB : environ +0,7 point, soit un taux d'environ 7,2 %.</p>
+      </div></div>
+      <div class="step"><div class="card"><span class="tag ai">Assistant</span>
+        <p class="q">Simule un taux d'APB de 7,2 % et une économie de 2 % sur le fonctionnement à Malines, puis enregistre le scénario sous le nom « Compensation Gemeentefonds ».</p>
+        <a class="ask" data-q>Poser dans l'assistant →</a>
+        <p class="expect"><b>Attendu :</b> l'onglet Simulation s'ouvre avec les leviers réglés, le résultat avant et après s'affiche, et le scénario « Chatbot – Compensation Gemeentefonds » rejoint la liste, à comparer avec les deux précédents.</p>
+        <p class="say">Conclusion : « En un quart d'heure, on passe du constat flamand à des pistes chiffrées pour votre commune. Les scénarios s'exportent pour être repris avec vos services. »</p>
+      </div></div>
+    </div>
+    <p class="note">Les chiffres attendus sont ceux des données du tableau de bord (octobre 2026). Ils changent quand les données sont mises à jour.</p>
+
+    <h2 id="fr-limits">9. Bonnes pratiques et limites</h2>
+    <ul>
+      <li><b>Comparez au sein d'une région.</b> Le budget flamand (BBC) inclut le CPAS (OCMW) ; le solde n'a pas la même définition en Flandre qu'en Wallonie et à Bruxelles.</li>
+      <li><b>Vérifiez la fiabilité.</b> 452 communes ont un budget 2026 exploitable ; il n'y en a pas pour 63 communes, dont plusieurs grandes villes wallonnes (Charleroi, Mons…). Certains budgets wallons ne sont connus qu'en totaux.</li>
+      <li><b>Lisez les spécificités comme des pressions probables</b>, pas comme des montants : elles sont souvent compensées ailleurs.</li>
+      <li><b>La simulation</b> porte sur le budget d'exploitation 2026 seulement, sans effet de comportement.</li>
+      <li><b>Le Gemeentefonds « après réduction »</b> corrige les plans du seul écart officiel ; les autres ajustements des communes ne sont pas simulés.</li>
+      <li>Les données sont compilées automatiquement à partir de sources publiques et ne sont pas validées officiellement.</li>
+    </ul>
+  </main>
+
+  <!-- ============================== NEDERLANDS ============================== -->
+  <main lang="nl" data-l="nl">
+    <h1>Gebruikersgids</h1>
+    <p class="lede">Het dashboard “Gemeentebegrotingen 2026” bundelt de begrotingen 2026 van de 565 Belgische gemeenten (grenzen van 2025), de factoren die hun verschillen verklaren, de impact van de inkrimping van het Gemeentefonds in Vlaanderen en een simulatietool. Met een gespreksassistent kunt u het in het Nederlands of het Frans bevragen.</p>
+    <nav class="toc card" aria-label="Inhoud"><ol>
+      <li><a href="#nl-nav">Aan de slag</a></li>
+      <li><a href="#nl-apercu">Overzicht</a></li>
+      <li><a href="#nl-gf">Gemeentefonds (Vlaanderen)</a></li>
+      <li><a href="#nl-commune">Analyse van een gemeente</a></li>
+      <li><a href="#nl-sim">Simulatie en scenario's</a></li>
+      <li><a href="#nl-methode">Methode</a></li>
+      <li><a href="#nl-ai">Assistent</a></li>
+      <li><a href="#nl-scenario">Demoscenario: Mechelen</a></li>
+      <li><a href="#nl-limits">Goede praktijken en beperkingen</a></li>
+    </ol></nav>
+
+    <h2 id="nl-nav">1. Aan de slag</h2>
+    <dl>
+      <dt>Taal</dt><dd>Het dashboard opent in het Nederlands. Met de knoppen <span class="ui">FR</span> / <span class="ui">NL</span> rechtsboven wisselt u van taal; voeg <code>?lang=fr</code> toe aan het adres om het in het Frans te openen.</dd>
+      <dt>Vaste balk</dt><dd>Ze blijft zichtbaar wanneer u scrolt. Ze bevat de vijf tabbladen, de knop <span class="ui">💬 Assistent</span>, de gekozen gemeente en de zoekfunctie.</dd>
+      <dt>Een gemeente zoeken</dt><dd>Typ minstens twee letters van de Nederlandse of Franse naam (Gent of Gand) en kies in de lijst met de muis of met de pijltjes en Enter. De gemeente wordt de “gekozen gemeente” van alle tabbladen.</dd>
+      <dt>Gekozen gemeente</dt><dd>Haar naam en gewest staan in de balk, met snelkoppelingen naar <span class="ui">Analyse</span>, <span class="ui">Gemeentefonds</span> (Vlaamse gemeenten) en <span class="ui">Simuleren</span>.</dd>
+      <dt>Contextuele hulp</dt><dd>De kleine knoppen <span class="ui">?</span> naast de titels leggen een begrip of grafiek uit (AFM, BBR, gewestelijke rang, vergelijkbare gemeenten…).</dd>
+      <dt>Tooltips</dt><dd>Beweeg over een punt, een balk of een gemeente op de kaart om de exacte waarde te zien.</dd>
+    </dl>
+
+        <div class="figs"><figure><a href="guide_img/nl/barre.jpg" target="_blank" rel="noopener"><img src="guide_img/nl/barre.jpg" alt="Schermafbeelding: De vaste balk: tabbladen, assistent, gids, gekozen gemeente met snelkoppelingen, zoekfunctie." loading="lazy"></a><figcaption>De vaste balk: tabbladen, assistent, gids, gekozen gemeente met snelkoppelingen, zoekfunctie.</figcaption></figure></div>
+
+    <h2 id="nl-apercu">2. Overzicht</h2>
+    <p>Hier vergelijkt u de gemeenten onderling, voor heel België of voor één gewest.</p>
+    <dl>
+      <dt>Filters</dt><dd><span class="ui">Gewest</span> beperkt de hele pagina; <span class="ui">Getoonde indicator</span> kiest wat de kaart, de verdeling en de rangschikking tonen (uitgaven per inwoner, fiscaliteit, inkomens, bevolking, voorzieningen…).</dd>
+      <dt>Kerncijfers</dt><dd>Aantal gemeenten, bruikbare begrotingen, inwoners, mediaan en totaal van de exploitatie-uitgaven, gemeenten met een exploitatietekort. Een klikbare tegel toont de overeenkomstige indicator op de kaart.</dd>
+      <dt>Kaart</dt><dd>De kleur geeft de rang van de gemeente binnen haar gewest (licht = laag, donker = hoog). Klik op een gemeente om ze te analyseren. Zoomen met <span class="ui">+</span> / <span class="ui">−</span>, Ctrl + scrollwiel of knijpen; <span class="ui">Alles</span> toont heel België, <span class="ui">Gekozen gemeente</span> centreert de gemeente.</dd>
+      <dt>Verdeling per gewest</dt><dd>Elk punt is een gemeente; de verticale lijn is de mediaan van het gewest.</dd>
+      <dt>Twee dimensies kruisen</dt><dd>Puntenwolk met een vrij te kiezen <span class="ui">Horizontale as</span> en <span class="ui">Verticale as</span> (bijvoorbeeld inkomen per inwoner en uitgaven per inwoner). Grootte van de punten: bevolking; kleur: gewest. Zoomen zoals op de kaart.</dd>
+      <dt>Structuur van de exploitatiebegroting</dt><dd>Gemiddelde per inwoner van elke soort uitgave en ontvangst (personeel, werking, overdrachten, schuld, fiscaliteit, dotaties…), per gewest.</dd>
+      <dt>Uitgaven per functie</dt><dd>Gemiddelde per inwoner van elke functiegroep (onderwijs, veiligheid, sociale actie…), voor de begrotingen die per functie opgesplitst zijn.</dd>
+      <dt>Rangschikking</dt><dd>Tabel van alle gemeenten: sorteer door op een kolomtitel te klikken, filter met <span class="ui">Zoeken</span>, klik op een lijn om de gemeente te openen.</dd>
+    </dl>
+
+        <div class="figs"><figure><a href="guide_img/nl/apercu_tuiles.jpg" target="_blank" rel="noopener"><img src="guide_img/nl/apercu_tuiles.jpg" alt="Schermafbeelding: De kerncijfers, klikbaar." loading="lazy"></a><figcaption>De kerncijfers, klikbaar.</figcaption></figure><figure><a href="guide_img/nl/apercu_carte.jpg" target="_blank" rel="noopener"><img src="guide_img/nl/apercu_carte.jpg" alt="Schermafbeelding: De kaart: kleur = rang van de gemeente binnen haar gewest; zoomen en centreren bovenaan." loading="lazy"></a><figcaption>De kaart: kleur = rang van de gemeente binnen haar gewest; zoomen en centreren bovenaan.</figcaption></figure><figure><a href="guide_img/nl/apercu_nuage.jpg" target="_blank" rel="noopener"><img src="guide_img/nl/apercu_nuage.jpg" alt="Schermafbeelding: Twee dimensies kruisen: elk punt is een gemeente, de grootte geeft de bevolking." loading="lazy"></a><figcaption>Twee dimensies kruisen: elk punt is een gemeente, de grootte geeft de bevolking.</figcaption></figure><figure><a href="guide_img/nl/apercu_classement.jpg" target="_blank" rel="noopener"><img src="guide_img/nl/apercu_classement.jpg" alt="Schermafbeelding: De rangschikking: sorteren per kolom, zoeken, klikken om een gemeente te openen." loading="lazy"></a><figcaption>De rangschikking: sorteren per kolom, zoeken, klikken om een gemeente te openen.</figcaption></figure></div>
+
+    <h2 id="nl-gf">3. Gemeentefonds (Vlaanderen)</h2>
+    <p>De Vlaamse regering brengt de jaarlijkse groei van het Gemeentefonds terug van 3,5 % naar 1 % in 2027, 1,25 % in 2028 en 1,5 % in 2029. Het tabblad vergelijkt voor elke Vlaamse gemeente het Gemeentefonds uit haar meerjarenplan 2026-2031 met de officiële bedragen van oktober 2026.</p>
+    <dl>
+      <dt>Kerncijfers</dt><dd>Gecumuleerd verschil 2027-2031 tussen plannen en officiële bedragen, verlies tegenover groei van 3,5 %, plannen nog niet aangepast, gemeenten met een negatieve AFM in 2031 of een negatief BBR na de inkrimping. Een klik op een tegel filtert de tabel.</dd>
+      <dt>Gemeentefonds van alle Vlaamse gemeenten</dt><dd>Per jaar: bedrag in de plannen, officieel bedrag en wat het bij +3,5 % geweest zou zijn.</dd>
+      <dt>Gemeenten met een negatief BBR, per jaar</dt><dd>Vóór en na de inkrimping. Het BBR moet elk jaar positief zijn; de AFM in het laatste jaar van het plan (2031).</dd>
+      <dt>Impact per gemeente</dt><dd>Filters <span class="ui">Alle gemeenten</span>, <span class="ui">Negatieve AFM in 2031 na inkrimping</span>, <span class="ui">Negatief BBR na inkrimping</span>, <span class="ui">Plan nog niet aangepast</span>, <span class="ui">Plan al aangepast</span>; filter per provincie en zoekfunctie. Sorteer op verschil, verschil per inwoner, AFM of BBR. Een negatief verschil betekent dat het plan meer verwacht dan de officiële bedragen.</dd>
+      <dt>Detail van een gemeente</dt><dd>Klik op een lijn: traject 2026-2031 van het Gemeentefonds, AFM en BBR vóór en na, en schuld van het plan (nieuwe leningen, aflossingen, intresten). <span class="ui">Simuleren met de inkrimping 2027</span> opent de simulatie met het verschil van 2027 als minderontvangst.</dd>
+    </dl>
+
+        <div class="figs"><figure><a href="guide_img/nl/gf_tuiles.jpg" target="_blank" rel="noopener"><img src="guide_img/nl/gf_tuiles.jpg" alt="Schermafbeelding: De kerncijfers van de inkrimping van het Gemeentefonds voor Vlaanderen." loading="lazy"></a><figcaption>De kerncijfers van de inkrimping van het Gemeentefonds voor Vlaanderen.</figcaption></figure><figure><a href="guide_img/nl/gf_total.jpg" target="_blank" rel="noopener"><img src="guide_img/nl/gf_total.jpg" alt="Schermafbeelding: Gemeentefonds van alle Vlaamse gemeenten: plannen, officiële bedragen en traject aan 3,5 %." loading="lazy"></a><figcaption>Gemeentefonds van alle Vlaamse gemeenten: plannen, officiële bedragen en traject aan 3,5 %.</figcaption></figure><figure><a href="guide_img/nl/gf_tableau.jpg" target="_blank" rel="noopener"><img src="guide_img/nl/gf_tableau.jpg" alt="Schermafbeelding: Impact per gemeente, gefilterd op “Mechelen”." loading="lazy"></a><figcaption>Impact per gemeente, gefilterd op “Mechelen”.</figcaption></figure><figure><a href="guide_img/nl/gf_commune.jpg" target="_blank" rel="noopener"><img src="guide_img/nl/gf_commune.jpg" alt="Schermafbeelding: Het detail 2026-2031 van Mechelen: Gemeentefonds, AFM, BBR en schuld van het plan." loading="lazy"></a><figcaption>Het detail 2026-2031 van Mechelen: Gemeentefonds, AFM, BBR en schuld van het plan.</figcaption></figure></div>
+
+    <h2 id="nl-commune">4. Analyse van een gemeente</h2>
+    <p>Hier verklaart u de positie van de gekozen gemeente tegenover de andere gemeenten van haar gewest.</p>
+    <dl>
+      <dt>Kenmerken</dt><dd>Structurele factoren waarin de gemeente zich onderscheidt (omvang, grondgebied, welvaart, leeftijd, toerisme, zeldzame voorzieningen…), met hun verwachte effect op uitgaven en ontvangsten. Het gaat om waarschijnlijke druk, niet om bedragen. De observaties “Begroting 2026” beschrijven een resultaat, geen oorzaak.</dd>
+      <dt>Vergelijkbare gemeenten</dt><dd>Gemeenten uit hetzelfde gewest, met een bruikbare begroting, die het dichtst aanleunen op de aangevinkte dimensies (omvang, grondgebied, welvaart, leeftijd, economische activiteit, vastgoedbasis, toerisme). Wijzig de dimensies of het aantal gemeenten om de vergelijkingsgroep te wijzigen.</dd>
+      <dt>Waar de gemeente meer uitgeeft, waar ze minder ontvangt</dt><dd>De grootste verschillen, in euro per inwoner, tegenover de mediaan van de vergelijkbare gemeenten.</dd>
+      <dt>Uitgaven en ontvangsten per inwoner tegenover vergelijkbare gemeenten</dt><dd>Balk: van 25 % tot 75 % van de vergelijkbare gemeenten; lijn: mediaan; punt: de gemeente; ruit: de lopende simulatie.</dd>
+      <dt>Uitgaven per functie tegenover vergelijkbare gemeenten</dt><dd>Zelfde lezing, per functiegroep.</dd>
+      <dt>Profiel van de gemeente</dt><dd>Rang in het gewest (0 = laagste, 100 = hoogste) op de belangrijkste dimensies; de grijze lijnen tonen de vergelijkbare gemeenten.</dd>
+    </dl>
+
+        <div class="figs"><figure><a href="guide_img/nl/commune_specificites.jpg" target="_blank" rel="noopener"><img src="guide_img/nl/commune_specificites.jpg" alt="Schermafbeelding: De kenmerken van Mechelen, in vier kolommen: druk op de uitgaven, troeven en remmen voor de ontvangsten, observaties over de begroting 2026." loading="lazy"></a><figcaption>De kenmerken van Mechelen, in vier kolommen: druk op de uitgaven, troeven en remmen voor de ontvangsten, observaties over de begroting 2026.</figcaption></figure><figure><a href="guide_img/nl/commune_comparables.jpg" target="_blank" rel="noopener"><img src="guide_img/nl/commune_comparables.jpg" alt="Schermafbeelding: De vergelijkbare gemeenten en de dimensies die ze bepalen." loading="lazy"></a><figcaption>De vergelijkbare gemeenten en de dimensies die ze bepalen.</figcaption></figure><figure><a href="guide_img/nl/commune_depenses.jpg" target="_blank" rel="noopener"><img src="guide_img/nl/commune_depenses.jpg" alt="Schermafbeelding: Uitgaven per inwoner tegenover vergelijkbare gemeenten: balk van 25 % tot 75 %, lijn = mediaan, punt = de gemeente." loading="lazy"></a><figcaption>Uitgaven per inwoner tegenover vergelijkbare gemeenten: balk van 25 % tot 75 %, lijn = mediaan, punt = de gemeente.</figcaption></figure></div>
+
+    <h2 id="nl-sim">5. Simulatie en scenario's</h2>
+    <p>De simulatie wijzigt de exploitatiebegroting 2026 van de gekozen gemeente. Het resultaat verschijnt meteen in de balk (saldo 2026, gesimuleerd saldo, verschil, uitgaven en ontvangsten per inwoner) en op de pagina Analyse (ruiten).</p>
+    <dl>
+      <dt>Gesimuleerde gemeente</dt><dd><span class="ui">Andere gemeente kiezen</span> opent de analyse om een andere te kiezen; <span class="ui">Op nul zetten</span> wist alle hefbomen.</dd>
+      <dt>Hefbomen</dt><dd>Een schuifregelaar en een veld per post: personeel, werking, dotaties aan politie, hulpverlening en OCMW, overige overdrachten, schuld, belastingen, tarieven, gewestelijke dotaties, bevolking (in %). In Vlaanderen gebruiken het APB-tarief (in %) en de opcentiemen OOV de officiële opbrengsten van het plan; in Wallonië en Brussel het tarief van de aanvullende personenbelasting. Onder elke hefboom staat de basis.</dd>
+      <dt>Snelle hypothesen</dt><dd>Vooraf ingevulde knoppen, aan te passen: <span class="ui">Loonindexering +2 %</span>, energie (werking +5 %), <span class="ui">Nieuw zwembad</span>, <span class="ui">Politiedotatie +5 %</span>, <span class="ui">Inkrimping Gemeentefonds 2027</span> (Vlaanderen), <span class="ui">Uitgaven afstemmen op de mediaan van de vergelijkbare gemeenten</span>.</dd>
+      <dt>Toegevoegde lijnen</dt><dd>Een project, een nieuwe belasting of een besparing: omschrijving, uitgave of ontvangst, jaarbedrag in euro.</dd>
+      <dt>Resultaten</dt><dd>Tabel van de exploitatiebegroting 2026 en de simulatie, post per post, en positie tegenover de vergelijkbare gemeenten.</dd>
+      <dt>Scenario's</dt><dd>Geef een naam en klik op <span class="ui">Scenario bewaren</span>. Vink meerdere scenario's aan om ze naast elkaar te vergelijken; <span class="ui">Laden</span> opent ze opnieuw. Ze blijven in deze browser: <span class="ui">Exporteren (bestand)</span> of <span class="ui">Kopiëren</span> om ze door te geven, <span class="ui">Importeren</span> om ze elders te hernemen.</dd>
+    </dl>
+
+        <div class="figs"><figure><a href="guide_img/nl/sim_bandeau.jpg" target="_blank" rel="noopener"><img src="guide_img/nl/sim_bandeau.jpg" alt="Schermafbeelding: De resultaatbalk van de simulatie." loading="lazy"></a><figcaption>De resultaatbalk van de simulatie.</figcaption></figure><figure><a href="guide_img/nl/sim_leviers.jpg" target="_blank" rel="noopener"><img src="guide_img/nl/sim_leviers.jpg" alt="Schermafbeelding: De hefbomen, de snelle hypothesen en de toegevoegde lijnen (hier met de inkrimping 2027 en de APB op 7 %)." loading="lazy"></a><figcaption>De hefbomen, de snelle hypothesen en de toegevoegde lijnen (hier met de inkrimping 2027 en de APB op 7 %).</figcaption></figure><figure><a href="guide_img/nl/sim_scenarios.jpg" target="_blank" rel="noopener"><img src="guide_img/nl/sim_scenarios.jpg" alt="Schermafbeelding: Twee bewaarde scenario's, naast elkaar vergeleken." loading="lazy"></a><figcaption>Twee bewaarde scenario's, naast elkaar vergeleken.</figcaption></figure></div>
+
+    <h2 id="nl-methode">6. Methode</h2>
+    <p>Dit tabblad beschrijft de bronnen (BBC-analysetool en Tool algemene financiering in Vlaanderen, Bruxelles Pouvoirs Locaux, begrotingen en eComptes-syntheses van de Waalse gemeenten, Statbel, OpenStreetMap), de lezing van de indicatoren en de hypothesen van de simulatie.</p>
+
+    <h2 id="nl-ai">7. Assistent</h2>
+    <p>De assistent beantwoordt vragen uitsluitend op basis van de cijfers van het dashboard. Hij kan ook een tabblad of een gemeente openen en een simulatie uitvoeren, die als scenario bewaard wordt.</p>
+    <ol>
+      <li><b>Maak een API-sleutel aan</b> op console.anthropic.com: <i>Settings → Workspaces</i>, kies of maak een workspace (bijvoorbeeld “Demo begrotingen”, met een uitgavenlimiet) en daarna <i>API Keys → Create Key</i>. De sleutel moet bij een workspace horen.</li>
+      <li>Klik op <span class="ui">💬 Assistent</span>, plak de sleutel in het veld bovenaan het paneel en klik op <span class="ui">Opslaan</span>. Ze blijft in het browsertabblad, gaat rechtstreeks naar Anthropic en verdwijnt wanneer u het tabblad sluit; met <span class="ui">Sleutel vergeten</span> wist u ze meteen.</li>
+      <li>Stel een vraag (Enter om te verzenden, Shift+Enter voor een nieuwe regel) of klik op een voorbeeld in de <span class="ui">Handleiding</span>.</li>
+    </ol>
+    <p>In het paneel: de modelkeuze (Sonnet 5.5 standaard, snel, ongeveer 1 tot 3 cent per antwoord; Opus 5.5, nauwkeuriger en ongeveer dubbel zo duur), <span class="ui">Nieuw gesprek</span>, de taalknop en de Escape-toets om te sluiten. De assistent onthoudt het gesprek: “deze gemeente” is de gekozen gemeente.</p>
+    <p class="note warn">Plak de sleutel nooit in een gesprek, hier noch in een andere chatbot. Gebeurt dat toch, trek ze dan in via de Console en maak een nieuwe aan.</p>
+
+        <div class="figs"><figure><a href="guide_img/nl/assistant_aide.jpg" target="_blank" rel="noopener"><img src="guide_img/nl/assistant_aide.jpg" alt="Schermafbeelding: Het paneel van de assistent met de handleiding." loading="lazy"></a><figcaption>Het paneel van de assistent met de handleiding.</figcaption></figure><figure><a href="guide_img/nl/assistant_reponse.jpg" target="_blank" rel="noopener"><img src="guide_img/nl/assistant_reponse.jpg" alt="Schermafbeelding: Een antwoord van de assistent naast de toepassing (voorbeeld)." loading="lazy"></a><figcaption>Een antwoord van de assistent naast de toepassing (voorbeeld).</figcaption></figure></div>
+
+    <h2 id="nl-scenario">8. Demoscenario: Mechelen en de inkrimping van het Gemeentefonds</h2>
+    <p>Situatie: u ontmoet de schepen van financiën van Mechelen. In een kwartier toont u wat er voor Vlaanderen op het spel staat, berekent u de impact voor Mechelen, verklaart u die en test u pistes. De stappen <span class="tag screen">Scherm</span> doet u zelf; de stappen <span class="tag ai">Assistent</span> hebben een knop die de vraag in het paneel opent, klaar om te verzenden.</p>
+    <div class="steps">
+      <div class="step"><div class="card"><span class="tag screen">Scherm</span>
+        <p class="do">Open het tabblad <span class="ui">Gemeentefonds (Vlaanderen)</span> en licht de kerncijfers toe.</p>
+        <p class="expect"><b>Op het scherm:</b> gecumuleerd verschil 2027-2031 van ongeveer −1,02 miljard €; 283 van de 285 plannen nog niet aangepast; 71 gemeenten met een negatieve AFM in 2031 na de inkrimping (geen enkele ervoor); 203 gemeenten met een negatief BBR in minstens één jaar (62 ervoor).</p>
+        <p class="say">Te zeggen: “De inkrimping is geen detail: bij meer dan twee op de drie Vlaamse gemeenten zakt het BBR onder nul.”</p>
+      
+        <img class="thumb" src="guide_img/nl/gf_tuiles.jpg" alt="Schermafbeelding: De kerncijfers van de inkrimping van het Gemeentefonds voor Vlaanderen." loading="lazy">
+      </div></div>
+      <div class="step"><div class="card"><span class="tag screen">Scherm</span>
+        <p class="do">Typ in <span class="ui">Impact per gemeente</span> “Mechelen” in het zoekveld en klik op de lijn.</p>
+        <p class="expect"><b>Op het scherm:</b> Mechelen verliest ongeveer 20,3 miljoen € over 2027-2031 (−227 € per inwoner, 10e grootste verlies per inwoner in Vlaanderen). De AFM 2031 blijft positief (12,1 → 7,1 miljoen €), maar het BBR 2031 daalt van 0,5 miljoen € naar −20,5 miljoen € en wordt al in 2026 negatief.</p>
+        <p class="say">Te zeggen: “De AFM-norm houdt nog stand, de BBR-norm niet: het meerjarenplan moet herzien worden.”</p>
+      
+        <img class="thumb" src="guide_img/nl/gf_tableau.jpg" alt="Schermafbeelding: Impact per gemeente, gefilterd op “Mechelen”." loading="lazy">
+      </div></div>
+      <div class="step"><div class="card"><span class="tag ai">Assistent</span>
+        <p class="q">Vat in drie punten de impact van de inkrimping van het Gemeentefonds voor Mechelen samen, jaar per jaar.</p>
+        <a class="ask" data-q>Vraag stellen in de assistent →</a>
+        <p class="expect"><b>Verwacht:</b> de jaarlijkse verschillen (van −0,7 miljoen € in 2026 tot −5,0 miljoen € in 2031), de AFM en het BBR vóór en na, in een kort antwoord. Toon dat u de synthese krijgt zonder het scherm te verlaten.</p>
+      </div></div>
+      <div class="step"><div class="card"><span class="tag screen">Scherm</span>
+        <p class="do">Klik op <span class="ui">Analyse</span> in de vaste balk. Overloop de kenmerken, de vergelijkbare gemeenten en “Waar de gemeente meer uitgeeft, waar ze minder ontvangt”.</p>
+        <p class="expect"><b>Op het scherm:</b> de structurele factoren van Mechelen en haar begroting per inwoner (3 085 € exploitatie-uitgaven) tegenover Vlaamse gemeenten met een gelijkaardig profiel.</p>
+      </div></div>
+      <div class="step"><div class="card"><span class="tag ai">Assistent</span>
+        <p class="q">Waarom geeft Mechelen 3 085 € per inwoner uit? Welke kenmerken wegen op haar begroting?</p>
+        <a class="ask" data-q>Vraag stellen in de assistent →</a>
+        <p class="expect"><b>Verwacht:</b> de belangrijkste kenmerken, voorgesteld als waarschijnlijke druk, en de posten die het meest afwijken van de Vlaamse mediaan.</p>
+      </div></div>
+      <div class="step"><div class="card"><span class="tag screen">Scherm</span>
+        <p class="do">Klik op <span class="ui">Simuleren</span> en daarna op de snelle hypothese <span class="ui">Inkrimping Gemeentefonds 2027</span>. Noem het scenario “Inkrimping 2027” en bewaar het.</p>
+        <p class="expect"><b>Op het scherm:</b> een minderontvangst van ongeveer 2,2 miljoen €; het exploitatiesaldo daalt van ongeveer 15,6 naar 13,4 miljoen €.</p>
+      </div></div>
+      <div class="step"><div class="card"><span class="tag screen">Scherm</span>
+        <p class="do">Zonder op nul te zetten: zet de hefboom <span class="ui">Aanvullende personenbelasting (APB)</span> op 7,0. Bewaar als “Inkrimping 2027 + APB 7 %” en vink beide scenario's aan om ze te vergelijken.</p>
+        <p class="expect"><b>Op het scherm:</b> +0,5 procentpunt APB brengt ongeveer 2,84 miljoen € per jaar op en compenseert het verlies van 2027; de scenariotabel toont beide saldi naast elkaar.</p>
+      
+        <img class="thumb" src="guide_img/nl/sim_scenarios.jpg" alt="Schermafbeelding: Twee bewaarde scenario's, naast elkaar vergeleken." loading="lazy">
+      </div></div>
+      <div class="step"><div class="card"><span class="tag ai">Assistent</span>
+        <p class="q">Welke verhoging van de APB zou alleen het gemiddelde jaarlijkse verlies aan Gemeentefonds van Mechelen tussen 2027 en 2031 compenseren?</p>
+        <a class="ask" data-q>Vraag stellen in de assistent →</a>
+        <p class="expect"><b>Verwacht:</b> een gemiddeld verlies van ongeveer 4,1 miljoen € per jaar, gedeeld door de 5,7 miljoen € die 1 procentpunt APB opbrengt: ongeveer +0,7 procentpunt, of een tarief van ongeveer 7,2 %.</p>
+      </div></div>
+      <div class="step"><div class="card"><span class="tag ai">Assistent</span>
+        <p class="q">Simuleer een APB-tarief van 7,2 % en een besparing van 2 % op de werking in Mechelen, en bewaar het scenario onder de naam “Compensatie Gemeentefonds”.</p>
+        <a class="ask" data-q>Vraag stellen in de assistent →</a>
+        <p class="expect"><b>Verwacht:</b> het tabblad Simulatie opent met de ingestelde hefbomen, het resultaat vóór en na verschijnt, en het scenario “Chatbot – Compensatie Gemeentefonds” komt in de lijst, te vergelijken met de twee vorige.</p>
+        <p class="say">Besluit: “In een kwartier gaan we van de Vlaamse vaststelling naar becijferde pistes voor uw gemeente. De scenario's kunt u exporteren om ze met uw diensten verder uit te werken.”</p>
+      </div></div>
+    </div>
+    <p class="note">De verwachte cijfers zijn die van de dashboardgegevens (oktober 2026). Ze veranderen wanneer de gegevens bijgewerkt worden.</p>
+
+    <h2 id="nl-limits">9. Goede praktijken en beperkingen</h2>
+    <ul>
+      <li><b>Vergelijk binnen één gewest.</b> De Vlaamse begroting (BBC) omvat het OCMW; het saldo heeft niet dezelfde definitie in Vlaanderen als in Wallonië en Brussel.</li>
+      <li><b>Controleer de betrouwbaarheid.</b> 452 gemeenten hebben een bruikbare begroting 2026; voor 63 gemeenten is er geen, waaronder enkele grote Waalse steden (Charleroi, Bergen…). Sommige Waalse begrotingen zijn alleen in totalen bekend.</li>
+      <li><b>Lees kenmerken als waarschijnlijke druk</b>, niet als bedragen: ze worden vaak elders gecompenseerd.</li>
+      <li><b>De simulatie</b> gaat alleen over de exploitatiebegroting 2026, zonder gedragseffecten.</li>
+      <li><b>Het Gemeentefonds “na inkrimping”</b> corrigeert de plannen alleen met het officiële verschil; andere aanpassingen door de gemeenten worden niet gesimuleerd.</li>
+      <li>De gegevens zijn automatisch samengesteld uit openbare bronnen en niet officieel gevalideerd.</li>
+    </ul>
+  </main>
+
+  <footer>Sources / Bronnen : Statbel, OpenStreetMap, Agentschap Binnenlands Bestuur (BBC), Bruxelles Pouvoirs Locaux, budgets publiés par les communes wallonnes.</footer>
+</div>
+<script>
+(function () {
+  // néerlandais par défaut, comme le tableau de bord ; ?lang=fr pour le français
+  let lang = new URLSearchParams(location.search).get('lang') === 'fr' ? 'fr' : 'nl';
+  // chaque bouton de question ouvre le tableau de bord avec la question prête dans le panneau
+  document.querySelectorAll('a[data-q]').forEach((a) => { a.dataset.text = a.closest('.card').querySelector('.q').textContent.trim(); });
+  const apply = () => {
+    document.documentElement.lang = lang;
+    document.querySelectorAll('[data-l]').forEach((el) => { el.hidden = el.dataset.l !== lang; });
+    document.querySelectorAll('.lang button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.set === lang)));
+    document.getElementById('back').href = 'index.html?lang=' + lang;
+    document.querySelectorAll('a[data-q]').forEach((a) => { a.href = 'index.html?lang=' + lang + '&ask=' + encodeURIComponent(a.dataset.text); });
+    document.title = lang === 'nl' ? 'Gebruikersgids – Gemeentebegrotingen 2026' : "Guide d'utilisation – Budgets communaux 2026";
+  };
+  document.querySelectorAll('.lang button').forEach((b) => b.addEventListener('click', () => {
+    lang = b.dataset.set;
+    try { history.replaceState(null, '', '?lang=' + lang + location.hash); } catch (e) { /* ignore */ }
+    apply();
+  }));
+  apply();
+})();
+</script>
+</body>
+</html>

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="fr">
+<html lang="nl">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -43,6 +43,7 @@ html, body { margin: 0; background: var(--color-bg); color: var(--color-fg); fon
 .site-foot { max-width: 1500px; margin: 32px auto 0; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
 .site-foot a { color: inherit; }
 </style>
+<link rel="stylesheet" href="chat/chat.css">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
 <script>
 // Minimal stand-in for the claude.ai dashboard API: loads the JSON files, runs the
@@ -199,6 +200,8 @@ window.dash = (function () {
 /* simulation: sliders and sticky result bar */
 .bc-lever-row { display: flex; gap: var(--cds-gap-sm); align-items: center; }
 .bc-lever-row input[type="range"] { flex: 1 1 auto; min-width: 0; accent-color: var(--color-fg); }
+/* le champ garde une largeur fixe, bordure comprise, pour ne pas déborder sur la colonne voisine */
+.bc-lever-row input[type="number"] { flex: 0 0 5.5rem; width: 5.5rem; min-width: 0; box-sizing: border-box; }
 .bc-simbar { position: sticky; top: calc(var(--bc-sticky-h, 48px) + env(safe-area-inset-top, 0px)); z-index: 20; display: flex; flex-wrap: wrap; gap: var(--cds-gap-xs) var(--cds-gap-lg); align-items: baseline; background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-sm) var(--cds-pad-md); box-shadow: var(--cds-shadow-popover); font-variant-numeric: tabular-nums; }
 .bc-simbar .lab { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
 .bc-simbar .val { font-family: var(--font-anthropic-serif); font-size: var(--cds-font-size-heading); }
@@ -592,7 +595,10 @@ window.dash = (function () {
 <script>
 (function () {
   const S = window.BC = window.BC || {};
-  S.lang = S.lang || 'fr';
+  // néerlandais par défaut (priorité commerciale : la Flandre) ; ?lang=fr dans l'URL pour le français
+  let urlLang = null;
+  try { urlLang = new URLSearchParams(location.search).get('lang'); } catch (e) { /* sandbox */ }
+  S.lang = S.lang || (urlLang === 'fr' ? 'fr' : 'nl');
   // bilingual string: L('texte', 'tekst')
   const L = S.L = (fr, nl) => (S.lang === 'nl' ? nl : fr);
   const fmtCache = {};
@@ -890,6 +896,7 @@ window.dash = (function () {
 
   // static texts: data-nl (text) and data-nl-ph (placeholder); French kept in data-fr
   S.applyStatic = () => {
+    try { document.documentElement.lang = S.lang; } catch (e) { /* sandbox */ }
     document.querySelectorAll('.bc [data-nl]').forEach((el) => {
       if (el.dataset.fr == null) el.dataset.fr = el.textContent;
       el.textContent = S.lang === 'nl' ? el.dataset.nl : el.dataset.fr;
@@ -2183,7 +2190,8 @@ window.dash = (function () {
 })();
 </script>
 
-<p class="site-foot">Sources / Bronnen : Statbel, OpenStreetMap, Agentschap Binnenlands Bestuur (BBC), Bruxelles Pouvoirs Locaux, budgets publiés par les communes wallonnes. Données compilées automatiquement, non validées officiellement / Automatisch samengestelde gegevens, niet officieel gevalideerd.</p>
+<script type="module" src="chat/chat.js"></script>
+<p class="site-foot"><a href="guide.html">Gebruikersgids / Guide d'utilisation</a> · Sources / Bronnen : Statbel, OpenStreetMap, Agentschap Binnenlands Bestuur (BBC), Bruxelles Pouvoirs Locaux, budgets publiés par les communes wallonnes. Données compilées automatiquement, non validées officiellement / Automatisch samengestelde gegevens, niet officieel gevalideerd.</p>
 </div>
 </body>
 </html>
