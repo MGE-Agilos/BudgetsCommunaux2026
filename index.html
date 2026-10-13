@@ -1,0 +1,1374 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Budgets communaux 2026</title>
+<meta name="description" content="Budgets 2026 des communes belges, spécificités structurelles, comparaison entre communes et simulation. FR / NL.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;500;600&family=Source+Serif+4:opsz,wght@8..60,400;8..60,500&display=swap">
+<style>
+:root {
+  --font-anthropic-sans: "Source Sans 3", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-anthropic-serif: "Source Serif 4", Georgia, "Times New Roman", serif;
+  --color-bg: #f6f6f3; --color-panel: #ffffff; --color-fg: #1f2328; --color-fg-muted: #5d636b;
+  --color-border-line: #e1e2dd; --color-ok: #1a7f4b; --color-warn: #a35c00; --color-bad: #c0362c;
+  --cds-gap-xs: 4px; --cds-gap-sm: 8px; --cds-gap-md: 14px; --cds-gap-lg: 22px; --cds-gap-xl: 32px;
+  --cds-pad-xs: 4px; --cds-pad-sm: 8px; --cds-pad-md: 14px; --cds-pad-lg: 18px; --cds-pad-xl: 28px;
+  --cds-radius: 8px;
+  --cds-font-size-caption: 0.8125rem; --cds-font-size-body: 0.9375rem; --cds-font-size-heading: 1.0625rem; --cds-font-size-title: 1.75rem;
+  --cds-font-weight-medium: 600;
+  --cds-chart-grid: #ecece8; --cds-chart-axis: #c9cac4; --cds-chart-muted: #a9adb3; --cds-chart-reference: #8a8f96; --cds-chart-status-critical: #c0362c;
+  --cds-surface-popover: #ffffff; --cds-border: #d8d9d4; --cds-shadow-popover: 0 6px 20px rgba(20, 24, 30, .12); --cds-text-secondary: #5d636b;
+  --cds-dur-slow: 300ms;
+  --s1: #2f6db5; --s2: #d08a2a; --s3: #3f9a6b; --s4: #b0457a; --s5: #6b5bb5; --s6: #3a9bb0; --s7: #8c7a3a; --s8: #6d737b;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #15171a; --color-panel: #1d2024; --color-fg: #e8e9ea; --color-fg-muted: #a2a8b0;
+    --color-border-line: #2f3339; --color-ok: #4cc38a; --color-warn: #e0a24a; --color-bad: #f07167;
+    --cds-chart-grid: #262a2f; --cds-chart-axis: #3a3f46; --cds-chart-muted: #5b616a; --cds-chart-reference: #7b818a; --cds-chart-status-critical: #f07167;
+    --cds-surface-popover: #23272c; --cds-border: #353a41; --cds-shadow-popover: 0 6px 20px rgba(0, 0, 0, .45); --cds-text-secondary: #a2a8b0;
+    --s1: #6ea4e8; --s2: #e8a952; --s3: #62c08f; --s4: #d877a6; --s5: #9b8ce6; --s6: #5fc0d4; --s7: #c2ad62; --s8: #9aa0a8;
+    color-scheme: dark;
+  }
+}
+html, body { margin: 0; background: var(--color-bg); color: var(--color-fg); font-family: var(--font-anthropic-sans); font-size: 15px; }
+#dash-root { padding-inline: var(--dash-gutter, 24px); padding-block: 24px 48px; }
+.dash-skeleton { color: transparent; background: var(--color-border-line); border-radius: 4px; min-width: 4rem; }
+.site-foot { max-width: 1500px; margin: 32px auto 0; font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.site-foot a { color: inherit; }
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.9.0/d3.min.js"></script>
+<script>
+// Minimal stand-in for the claude.ai dashboard API: loads the JSON files, runs the
+// page's calculations once their inputs are loaded, and redraws on data or resize.
+window.dash = (function () {
+  const files = {communes: 'data/communes.json', specificites: 'data/specificites.json', fonctions: 'data/fonctions.json', carte: 'data/carte.json'};
+  const store = {}, calcs = {}, cbs = [];
+  const notify = () => cbs.forEach((f) => { try { f(); } catch (e) { console.error(e); } });
+  const recompute = () => {
+    Object.entries(calcs).forEach(([id, c]) => {
+      const st = c.inputs.map((i) => (store[i] || {}).status);
+      if (st.every((s) => s === 'ok')) {
+        try { store[id] = { status: 'ok', data: c.fn(...c.inputs.map((i) => store[i].data)) }; }
+        catch (e) { console.error(e); store[id] = { status: 'error', data: [] }; }
+      } else store[id] = { status: st.includes('error') ? 'error' : 'loading', data: [] };
+    });
+  };
+  Object.entries(files).forEach(([id, url]) => {
+    store[id] = { status: 'loading', data: [] };
+    fetch(url).then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then((d) => { store[id] = { status: 'ok', data: d }; recompute(); notify(); })
+      .catch((e) => { store[id] = { status: 'error', data: [], message: String(e) }; recompute(); notify(); });
+  });
+  let t;
+  window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(notify, 150); });
+  return {
+    data: (id) => store[id] || { status: 'missing', data: [] },
+    calc: (id, o) => { calcs[id] = o; recompute(); },
+    loader: () => {},
+    onData: (f) => { cbs.push(f); try { f(); } catch (e) { console.error(e); } },
+    colors: ['var(--s1)', 'var(--s2)', 'var(--s3)', 'var(--s4)', 'var(--s5)', 'var(--s6)', 'var(--s7)', 'var(--s8)'],
+    setLink: (name) => { try { history.replaceState(null, '', '#' + name); } catch (e) { /* ignore */ } },
+    params: () => ({}), setParams: () => {}, resetParams: () => {}, refresh: () => {},
+  };
+})();
+</script>
+</head>
+<body>
+<div id="dash-root">
+<style>
+#dash-root { --dash-gutter: clamp(12px, 3vw, 32px); }
+.bc { display: grid; gap: var(--cds-gap-lg); font-family: var(--font-anthropic-sans); color: var(--color-fg); max-width: 1500px; margin-inline: auto; }
+.bc-head { display: grid; gap: var(--cds-gap-sm); }
+.bc-headrow { display: flex; flex-wrap: wrap; gap: var(--cds-gap-md); align-items: baseline; justify-content: space-between; }
+.bc-title { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); margin: 0; text-wrap: balance; }
+.bc-lang { display: inline-flex; border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); overflow: hidden; }
+.bc-lang button { font: inherit; font-size: var(--cds-font-size-caption); background: var(--color-panel); color: var(--color-fg-muted); border: 0; padding: var(--cds-pad-xs) var(--cds-pad-md); cursor: pointer; }
+.bc-lang button[aria-pressed="true"] { background: var(--color-fg); color: var(--color-bg); }
+.bc-lede { margin: 0; color: var(--color-fg-muted); max-width: 75ch; }
+.bc-tabs { display: flex; flex-wrap: wrap; gap: var(--cds-gap-xs); border-bottom: 1px solid var(--color-border-line); }
+.bc-tab { font: inherit; background: none; border: 0; border-bottom: 2px solid transparent; padding: var(--cds-pad-sm) var(--cds-pad-md); color: var(--color-fg-muted); cursor: pointer; }
+.bc-tab[aria-selected="true"] { color: var(--color-fg); border-bottom-color: var(--color-fg); }
+.bc-tab:focus-visible, .bc button:focus-visible, .bc select:focus-visible, .bc input:focus-visible { outline: 2px solid var(--color-fg); outline-offset: 2px; }
+.bc-page { display: grid; gap: var(--cds-gap-lg); }
+.bc-bar { display: flex; flex-wrap: wrap; gap: var(--cds-gap-md); align-items: end; }
+.bc-field { display: grid; gap: var(--cds-gap-xs); font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); min-width: 0; }
+.bc select, .bc input[type="text"], .bc input[type="number"], .bc input[type="search"] { font: inherit; font-size: var(--cds-font-size-body); color: var(--color-fg); background: var(--color-bg); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-xs) var(--cds-pad-sm); max-width: 100%; }
+.bc input[type="number"] { width: 7rem; font-variant-numeric: tabular-nums; }
+.bc-btn { font: inherit; font-size: var(--cds-font-size-caption); border: 1px solid var(--color-border-line); background: var(--color-panel); color: var(--color-fg); border-radius: var(--cds-radius); padding: var(--cds-pad-xs) var(--cds-pad-sm); cursor: pointer; }
+.bc-btn:hover { border-color: var(--color-fg-muted); }
+.bc-btn[aria-pressed="true"] { background: var(--color-fg); color: var(--color-bg); border-color: var(--color-fg); }
+.bc-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr)); gap: var(--cds-gap-md); }
+.bc-tile { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-md); display: grid; gap: var(--cds-gap-xs); align-content: start; min-width: 0; }
+.bc-tile-label { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.bc-tile-value { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); font-variant-numeric: tabular-nums; line-height: 1.1; }
+.bc-tile-note { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); font-variant-numeric: tabular-nums; }
+.bc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 28rem), 1fr)); gap: var(--cds-gap-md); }
+.bc-card { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-lg); display: grid; gap: var(--cds-gap-sm); align-content: start; min-width: 0; }
+.bc-card.wide { grid-column: 1 / -1; }
+.bc-card h2, .bc-card h3 { font-size: var(--cds-font-size-heading); font-weight: var(--cds-font-weight-medium); margin: 0; text-wrap: balance; }
+.bc-note { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); margin: 0; max-width: 80ch; }
+.bc-chart { position: relative; min-height: 220px; }
+.bc-chart svg { display: block; overflow: visible; }
+.bc-tip { position: absolute; pointer-events: none; background: var(--cds-surface-popover); border: 1px solid var(--cds-border); border-radius: var(--cds-radius); box-shadow: var(--cds-shadow-popover); padding: var(--cds-pad-xs) var(--cds-pad-sm); font-size: var(--cds-font-size-caption); max-width: 18rem; z-index: 5; }
+.bc-tip b { font-weight: 600; }
+.bc-tip .muted { color: var(--cds-text-secondary); }
+.bc-legend { display: flex; flex-wrap: wrap; gap: var(--cds-gap-md); font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); align-items: center; }
+.bc-sw { display: inline-block; width: .7rem; height: .7rem; border-radius: 50%; margin-right: .3rem; vertical-align: -1px; }
+.bc-tablebox { max-height: 26rem; overflow: auto; }
+.bc table { border-collapse: collapse; width: 100%; font-size: var(--cds-font-size-caption); font-variant-numeric: tabular-nums; }
+.bc th, .bc td { text-align: left; padding: var(--cds-pad-xs) var(--cds-pad-sm); border-bottom: 1px solid var(--color-border-line); white-space: nowrap; }
+.bc th { position: sticky; top: 0; background: var(--color-panel); font-weight: var(--cds-font-weight-medium); color: var(--color-fg-muted); }
+.bc th button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+.bc td.num, .bc th.num { text-align: right; }
+.bc tbody tr { cursor: pointer; }
+.bc tbody tr:hover { background: var(--color-bg); }
+.bc tr.sel { background: var(--color-bg); font-weight: 600; }
+.bc-pill { display: inline-block; font-size: var(--cds-font-size-caption); border: 1px solid var(--color-border-line); border-radius: 999px; padding: 0 var(--cds-pad-sm); color: var(--color-fg-muted); }
+.bc-pill.ok { color: var(--color-ok); border-color: currentColor; }
+.bc-pill.warn { color: var(--color-warn); border-color: currentColor; }
+.bc-pill.bad { color: var(--color-bad); border-color: currentColor; }
+.bc-spec-col { display: grid; gap: var(--cds-gap-sm); align-content: start; min-width: 0; }
+.bc-spec-col h3 { display: flex; gap: var(--cds-gap-sm); align-items: baseline; }
+.bc-spec-item { border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-sm); display: grid; gap: var(--cds-gap-xs); background: var(--color-bg); }
+.bc-spec-name { font-weight: var(--cds-font-weight-medium); }
+.bc-spec-meta { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); font-variant-numeric: tabular-nums; }
+.bc-spec-txt { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.bc-pbar { position: relative; height: 6px; border-radius: 3px; background: var(--color-border-line); }
+.bc-pbar i { position: absolute; top: -3px; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; }
+.bc-cols3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr)); gap: var(--cds-gap-md); }
+.bc-chips { display: flex; flex-wrap: wrap; gap: var(--cds-gap-xs); }
+.bc-diag { display: grid; gap: var(--cds-gap-xs); margin: 0; padding-left: 1.1rem; }
+.bc-diag li { max-width: 80ch; }
+.bc-levers { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: var(--cds-gap-md); }
+.bc-lever { display: grid; gap: var(--cds-gap-xs); font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.bc-lever span.base { font-variant-numeric: tabular-nums; }
+.bc-lines { display: grid; gap: var(--cds-gap-sm); }
+.bc-line { display: flex; flex-wrap: wrap; gap: var(--cds-gap-sm); align-items: center; }
+.bc-line input[type="text"] { flex: 1 1 12rem; }
+.bc-delta.pos { color: var(--color-ok); }
+.bc-delta.neg { color: var(--color-bad); }
+.bc-empty { color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); padding: var(--cds-pad-md) 0; }
+.bc-method { display: grid; gap: var(--cds-gap-sm); max-width: 85ch; }
+.bc-method p, .bc-method li { margin: 0; line-height: 1.5; }
+.bc-method ul { display: grid; gap: var(--cds-gap-xs); margin: 0; padding-left: 1.1rem; }
+.bc-method h3 { margin-top: var(--cds-gap-sm); }
+[data-dash-source-state=refreshing] { opacity: .5; transition: opacity var(--cds-dur-slow); }
+[data-dash-source-state=empty] { color: transparent; }
+.bc-failed { display: flex; align-items: center; justify-content: center; gap: .4rem; color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); min-height: inherit; }
+.bc-failed::before { content: ""; width: .375rem; height: .375rem; border-radius: 50%; background: var(--color-bad); }
+@media (max-width: 640px) { .bc th.hide-n, .bc td.hide-n { display: none; } }
+</style>
+
+<div class="bc">
+  <header class="bc-head">
+    <div class="bc-headrow">
+      <h1 class="bc-title" id="titre" data-nl="Gemeentebegrotingen 2026">Budgets communaux 2026</h1>
+      <div class="bc-lang" role="group" aria-label="Langue / Taal">
+        <button id="lang-fr" data-lang="fr" aria-pressed="true">FR</button>
+        <button id="lang-nl" data-lang="nl" aria-pressed="false">NL</button>
+      </div>
+    </div>
+    <p class="bc-lede" id="lede" data-source="stats_region">—</p>
+    <nav class="bc-tabs" role="tablist" aria-label="Pages">
+      <button class="bc-tab" role="tab" id="tab-apercu" data-tab="apercu" aria-selected="true" data-nl="Overzicht">Vue d'ensemble</button>
+      <button class="bc-tab" role="tab" id="tab-commune" data-tab="commune" aria-selected="false" data-nl="Analyse van een gemeente">Analyse d'une commune</button>
+      <button class="bc-tab" role="tab" id="tab-simulation" data-tab="simulation" aria-selected="false" data-nl="Simulatie">Simulation</button>
+      <button class="bc-tab" role="tab" id="tab-methode" data-tab="methode" aria-selected="false" data-nl="Methode">Méthode</button>
+    </nav>
+  </header>
+
+  <!-- ============ VUE D'ENSEMBLE ============ -->
+  <section class="bc-page" id="apercu">
+    <div class="bc-bar">
+      <label class="bc-field"><span data-nl="Gewest">Région</span>
+        <select id="f-region"><option value="Belgique" data-nl="Heel België">Toute la Belgique</option><option value="Wallonie" data-nl="Wallonië">Wallonie</option><option value="Flandre" data-nl="Vlaanderen">Flandre</option><option value="Bruxelles" data-nl="Brussel">Bruxelles</option></select>
+      </label>
+      <label class="bc-field"><span data-nl="Getoonde indicator">Indicateur affiché</span>
+        <select id="f-ind"></select>
+      </label>
+    </div>
+
+    <div class="bc-tiles" id="tiles-apercu">
+      <div class="bc-tile"><span class="bc-tile-label" data-nl="Gemeenten">Communes</span><span class="bc-tile-value dash-skeleton" id="t-communes" data-source="stats_region" data-field="communes">—</span><span class="bc-tile-note" data-nl="op 1 januari 2025">au 1er janvier 2025</span></div>
+      <div class="bc-tile"><span class="bc-tile-label" data-nl="Met een bruikbare begroting 2026">Avec un budget 2026 exploitable</span><span class="bc-tile-value dash-skeleton" id="t-budget" data-source="stats_region" data-field="communes_budget">—</span><span class="bc-tile-note" id="t-budget-note">—</span></div>
+      <div class="bc-tile"><span class="bc-tile-label" data-nl="Inwoners">Habitants</span><span class="bc-tile-value dash-skeleton" id="t-pop" data-source="stats_region" data-field="population">—</span><span class="bc-tile-note" data-nl="bevolking op 1/1/2025">population au 1/1/2025</span></div>
+      <div class="bc-tile"><span class="bc-tile-label" data-nl="Exploitatie-uitgaven per inwoner">Dépenses d'exploitation par habitant</span><span class="bc-tile-value dash-skeleton" id="t-dep" data-source="stats_region" data-field="dep_expl_mediane_hab">—</span><span class="bc-tile-note" data-nl="mediaan van de gemeenten, begroting 2026">médiane des communes, budget 2026</span></div>
+      <div class="bc-tile"><span class="bc-tile-label" data-nl="Exploitatie-ontvangsten per inwoner">Recettes d'exploitation par habitant</span><span class="bc-tile-value dash-skeleton" id="t-rec" data-source="stats_region" data-field="rec_expl_mediane_hab">—</span><span class="bc-tile-note" data-nl="mediaan van de gemeenten, begroting 2026">médiane des communes, budget 2026</span></div>
+      <div class="bc-tile"><span class="bc-tile-label" data-nl="Totale exploitatie-uitgaven">Dépenses d'exploitation cumulées</span><span class="bc-tile-value dash-skeleton" id="t-total" data-source="stats_region" data-field="dep_expl_total">—</span><span class="bc-tile-note" data-nl="gemeenten met begroting">communes avec budget</span></div>
+    </div>
+
+    <div class="bc-grid">
+      <div class="bc-card" id="card-carte">
+        <h2 id="carte-titre">—</h2>
+        <p class="bc-note" data-nl="Kleur: rang van de gemeente binnen haar gewest (licht = laag, donker = hoog). Klik op een gemeente om ze te analyseren.">Couleur : rang de la commune dans sa région (clair = bas, foncé = haut). Cliquez sur une commune pour l'analyser.</p>
+        <div class="bc-chart" id="carte" data-source="carte communes" style="min-height:320px"></div>
+        <div class="bc-legend" id="carte-legende"></div>
+      </div>
+      <div class="bc-card" id="card-distribution">
+        <h2 id="distrib-titre">—</h2>
+        <p class="bc-note" data-nl="Elk punt is een gemeente; het verticale streepje is de mediaan van het gewest.">Chaque point est une commune ; le trait vertical marque la médiane de la région.</p>
+        <div class="bc-chart" id="distribution" data-source="communes" style="min-height:240px"></div>
+      </div>
+      <div class="bc-card wide" id="card-nuage">
+        <h2 data-nl="Twee dimensies kruisen">Croiser deux dimensions</h2>
+        <div class="bc-bar">
+          <label class="bc-field"><span data-nl="Horizontale as">Axe horizontal</span> <select id="f-x"></select></label>
+          <label class="bc-field"><span data-nl="Verticale as">Axe vertical</span> <select id="f-y"></select></label>
+        </div>
+        <p class="bc-note" data-nl="Grootte van de punten: bevolking. Kleur: gewest. Vergelijk bij voorkeur binnen één gewest: de Vlaamse begrotingen omvatten het OCMW, de Waalse en Brusselse niet.">Taille des points : population. Couleur : région. Comparez de préférence au sein d'une région : les budgets flamands incluent le CPAS (OCMW), pas les budgets wallons et bruxellois.</p>
+        <div class="bc-chart" id="nuage" data-source="communes" style="min-height:380px"></div>
+        <div class="bc-legend" id="nuage-legende" data-source="communes"></div>
+      </div>
+      <div class="bc-card" id="card-natures">
+        <h2 data-nl="Structuur van de exploitatiebegroting">Structure du budget d'exploitation</h2>
+        <p class="bc-note" data-nl="Gemiddelde per inwoner (totaal van de gemeenten / bevolking), enkel begrotingen opgesplitst naar aard.">Moyenne par habitant (total des communes / population), budgets ventilés par nature uniquement.</p>
+        <div class="bc-chart" id="natures" data-source="natures_region" style="min-height:300px"></div>
+        <div class="bc-legend" id="natures-legende" data-source="natures_region"></div>
+      </div>
+      <div class="bc-card" id="card-fonctions">
+        <h2 data-nl="Exploitatie-uitgaven per functie">Dépenses d'exploitation par fonction</h2>
+        <p class="bc-note" data-nl="Gemiddelde per inwoner, begrotingen opgesplitst naar functie. Functie 0 groepeert de algemene lasten (schuld, fondsen, niet-toegewezen dotaties).">Moyenne par habitant, budgets ventilés par fonction. La fonction 0 regroupe les charges générales (dette, fonds, dotations non affectées).</p>
+        <div class="bc-chart" id="fonctions" data-source="fonctions_region" style="min-height:300px"></div>
+        <div class="bc-legend" id="fonctions-legende" data-source="fonctions_region"></div>
+      </div>
+      <div class="bc-card wide" id="card-classement">
+        <h2 id="classement-titre">—</h2>
+        <div class="bc-bar"><label class="bc-field"><span data-nl="Zoeken">Rechercher</span> <input type="search" id="f-search" placeholder="Nom de commune" data-nl-ph="Naam van de gemeente"></label></div>
+        <div class="bc-tablebox">
+          <table id="classement" data-source="communes" data-row-key="nis">
+            <thead><tr>
+              <th data-field="commune"><button data-sort="commune" data-nl="Gemeente">Commune</button></th>
+              <th data-field="region" class="hide-n"><button data-sort="region" data-nl="Gewest">Région</button></th>
+              <th data-field="population" class="num"><button data-sort="population" data-nl="Inwoners">Habitants</button></th>
+              <th class="num" id="classement-th"><button data-sort="ind">—</button></th>
+              <th data-field="budget_statut" class="hide-n"><button data-sort="budget_statut" data-nl="Begroting">Budget</button></th>
+            </tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ COMMUNE ============ -->
+  <section class="bc-page" id="commune" hidden>
+    <div class="bc-bar">
+      <label class="bc-field"><span data-nl="Gemeente">Commune</span>
+        <input type="text" id="c-input" list="c-list" placeholder="Tapez un nom…" data-nl-ph="Typ een naam…" autocomplete="off">
+        <datalist id="c-list"></datalist>
+      </label>
+      <span id="c-badges" class="bc-chips"></span>
+    </div>
+    <p class="bc-note" id="c-source"></p>
+
+    <div class="bc-tiles" id="c-tiles" data-source="communes">
+      <div class="bc-tile"><span class="bc-tile-label" data-nl="Inwoners">Habitants</span><span class="bc-tile-value" id="c-pop" data-source="communes" data-field="population">—</span><span class="bc-tile-note" id="c-pop-note">—</span></div>
+      <div class="bc-tile"><span class="bc-tile-label" data-nl="Exploitatie-uitgaven / inw.">Dépenses d'exploitation / hab.</span><span class="bc-tile-value" id="c-dep" data-source="communes" data-field="dep_expl_hab">—</span><span class="bc-tile-note" id="c-dep-note">—</span></div>
+      <div class="bc-tile"><span class="bc-tile-label" data-nl="Exploitatie-ontvangsten / inw.">Recettes d'exploitation / hab.</span><span class="bc-tile-value" id="c-rec" data-source="communes" data-field="rec_expl_hab">—</span><span class="bc-tile-note" id="c-rec-note">—</span></div>
+      <div class="bc-tile"><span class="bc-tile-label" data-nl="Investeringen / inw.">Investissements / hab.</span><span class="bc-tile-value" id="c-inv" data-source="communes" data-field="dep_inv_hab">—</span><span class="bc-tile-note" id="c-inv-note">—</span></div>
+    </div>
+
+    <div class="bc-card wide" id="card-specificites">
+      <h2 data-nl="Kenmerken: wat de uitgaven en ontvangsten stuurt">Spécificités : ce qui pousse les dépenses et les recettes</h2>
+      <p class="bc-note" data-nl="Structurele factoren waarin de gemeente afwijkt van de andere gemeenten van haar gewest (gewestelijk percentiel). Ze verklaren een deel van de begrotingsverschillen; ze rechtvaardigen ze niet automatisch.">Facteurs structurels où la commune se distingue des autres communes de sa région (percentile régional). Ils expliquent une partie des écarts budgétaires ; ils ne les justifient pas automatiquement.</p>
+      <div class="bc-cols3" id="c-spec" data-source="specificites"></div>
+    </div>
+
+    <div class="bc-card wide" id="card-pairs">
+      <h2 data-nl="Vergelijkbare gemeenten">Communes comparables</h2>
+      <p class="bc-note" data-nl="Gemeenten uit hetzelfde gewest, met een bruikbare begroting, die het dichtst aanleunen op de aangevinkte dimensies (gestandaardiseerde verschillen).">Communes de la même région, avec un budget exploitable, les plus proches sur les dimensions cochées (écarts standardisés).</p>
+      <div class="bc-bar" id="c-dims"></div>
+      <div class="bc-bar">
+        <label class="bc-field"><span data-nl="Aantal vergelijkbare gemeenten">Nombre de communes comparables</span>
+          <select id="c-k"><option>5</option><option selected>10</option><option>15</option><option>20</option></select>
+        </label>
+      </div>
+      <div class="bc-tablebox" style="max-height:18rem">
+        <table id="c-pairs" data-source="communes" data-row-key="nis">
+          <thead><tr>
+            <th data-field="commune" data-nl="Gemeente">Commune</th>
+            <th data-field="population" class="num" data-nl="Inwoners">Habitants</th>
+            <th data-field="revenu_imposable_par_habitant" class="num hide-n" data-nl="Belastbaar inkomen / inw.">Revenu imposable / hab.</th>
+            <th data-field="densite_hab_km2" class="num hide-n" data-nl="Inw./km²">Hab./km²</th>
+            <th data-field="dep_expl_hab" class="num" data-nl="Uitgaven / inw.">Dépenses / hab.</th>
+            <th data-field="rec_expl_hab" class="num" data-nl="Ontvangsten / inw.">Recettes / hab.</th>
+          </tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="bc-grid">
+      <div class="bc-card wide" id="card-diagnostic">
+        <h2 data-nl="Waar de gemeente meer uitgeeft, waar ze minder ontvangt">Où la commune dépense plus, où elle perçoit moins</h2>
+        <p class="bc-note" id="c-diag-note">—</p>
+        <div class="bc-cols3" id="c-diag" data-source="communes"></div>
+      </div>
+      <div class="bc-card" id="card-postes-dep">
+        <h2 data-nl="Uitgaven per inwoner tegenover vergelijkbare gemeenten">Dépenses par habitant face aux communes comparables</h2>
+        <p class="bc-note" data-nl="Balk: van 25 % tot 75 % van de vergelijkbare gemeenten; streepje: mediaan; punt: de gemeente; ruit: simulatie.">Barre : de 25 % à 75 % des communes comparables ; trait : médiane ; point : la commune ; losange : simulation.</p>
+        <div class="bc-chart" id="c-dep-chart" data-source="communes" style="min-height:300px"></div>
+      </div>
+      <div class="bc-card" id="card-postes-rec">
+        <h2 data-nl="Ontvangsten per inwoner tegenover vergelijkbare gemeenten">Recettes par habitant face aux communes comparables</h2>
+        <p class="bc-note" data-nl="Zelfde lezing. De aanvullende belastingen en het gemeentefonds zijn subposten van de fiscaliteit en de dotaties.">Même lecture. Les additionnels et le fonds des communes sont des sous-postes de la fiscalité et des dotations.</p>
+        <div class="bc-chart" id="c-rec-chart" data-source="communes" style="min-height:300px"></div>
+      </div>
+      <div class="bc-card wide" id="card-fonctions-c">
+        <h2 data-nl="Exploitatie-uitgaven per functie tegenover vergelijkbare gemeenten">Dépenses d'exploitation par fonction face aux communes comparables</h2>
+        <p class="bc-note" id="c-fonc-note">—</p>
+        <div class="bc-chart" id="c-fonc-chart" data-source="fonctions" style="min-height:300px"></div>
+      </div>
+      <div class="bc-card wide" id="card-profil">
+        <h2 data-nl="Profiel van de gemeente">Profil de la commune</h2>
+        <p class="bc-note" data-nl="Rang binnen het gewest (0 = laagste, 100 = hoogste) op de belangrijkste dimensies. De grijze streepjes tonen de vergelijkbare gemeenten.">Rang dans la région (0 = la plus basse, 100 = la plus haute) sur les principales dimensions. Les traits gris montrent les communes comparables.</p>
+        <div class="bc-chart" id="c-profil" data-source="communes" style="min-height:420px"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ SIMULATION ============ -->
+  <section class="bc-page" id="simulation" hidden>
+    <div class="bc-bar">
+      <span class="bc-field"><span data-nl="Gesimuleerde gemeente">Commune simulée</span><strong id="s-commune" style="font-size:var(--cds-font-size-heading);color:var(--color-fg)">—</strong></span>
+      <button class="bc-btn" id="s-goto" data-nl="Andere gemeente kiezen">Changer de commune</button>
+      <button class="bc-btn" id="s-reset" data-nl="Op nul zetten">Remettre à zéro</button>
+    </div>
+    <p class="bc-note" id="s-note">—</p>
+
+    <div class="bc-card wide" id="card-leviers">
+      <h2 data-nl="Hefbomen">Leviers</h2>
+      <div class="bc-bar" id="s-presets">
+        <span class="bc-note" data-nl="Snelle hypothesen, aan te passen:">Hypothèses rapides, à ajuster :</span>
+        <button class="bc-btn" data-preset="index" data-nl="Loonindexering +2 %">Indexation des salaires +2 %</button>
+        <button class="bc-btn" data-preset="energie" data-nl="Energie: werking +5 %">Énergie : fonctionnement +5 %</button>
+        <button class="bc-btn" data-preset="piscine" data-nl="Nieuw zwembad">Nouvelle piscine</button>
+        <button class="bc-btn" data-preset="police" data-nl="Politiedotatie +5 %">Dotation police +5 %</button>
+        <button class="bc-btn" data-preset="pairs" data-nl="Uitgaven afstemmen op de mediaan van de vergelijkbare gemeenten">Aligner les dépenses sur la médiane des pairs</button>
+      </div>
+      <div class="bc-levers" id="s-levers"></div>
+      <h3 data-nl="Toegevoegde lijnen">Lignes ajoutées</h3>
+      <p class="bc-note" data-nl="Een project, een nieuwe belasting, een besparing: jaarbedrag in euro.">Un projet, une taxe nouvelle, une économie : montant annuel en euros.</p>
+      <div class="bc-lines" id="s-lines"></div>
+      <div><button class="bc-btn" id="s-addline" data-nl="Lijn toevoegen">Ajouter une ligne</button></div>
+    </div>
+
+    <div class="bc-tiles" id="s-tiles" data-source="communes">
+      <div class="bc-tile"><span class="bc-tile-label" data-nl="Exploitatiesaldo 2026">Solde d'exploitation 2026</span><span class="bc-tile-value" id="s-solde0">—</span><span class="bc-tile-note" data-nl="gestemde begroting">budget voté</span></div>
+      <div class="bc-tile"><span class="bc-tile-label" data-nl="Gesimuleerd saldo">Solde simulé</span><span class="bc-tile-value" id="s-solde1">—</span><span class="bc-tile-note" id="s-solde-delta">—</span></div>
+      <div class="bc-tile"><span class="bc-tile-label" data-nl="Gesimuleerde uitgaven / inw.">Dépenses / hab. simulées</span><span class="bc-tile-value" id="s-dep1">—</span><span class="bc-tile-note" id="s-dep-note">—</span></div>
+      <div class="bc-tile"><span class="bc-tile-label" data-nl="Gesimuleerde ontvangsten / inw.">Recettes / hab. simulées</span><span class="bc-tile-value" id="s-rec1">—</span><span class="bc-tile-note" id="s-rec-note">—</span></div>
+    </div>
+
+    <div class="bc-grid">
+      <div class="bc-card" id="card-sim-table">
+        <h2 data-nl="Exploitatiebegroting: 2026 en simulatie">Budget d'exploitation : 2026 et simulation</h2>
+        <div class="bc-tablebox" style="max-height:none">
+          <table id="s-table"><thead><tr><th data-nl="Post">Poste</th><th class="num" data-nl="Begroting 2026">Budget 2026</th><th class="num" data-nl="Gesimuleerd">Simulé</th><th class="num" data-nl="Verschil">Écart</th></tr></thead><tbody></tbody></table>
+        </div>
+      </div>
+      <div class="bc-card" id="card-sim-chart">
+        <h2 data-nl="Positie tegenover vergelijkbare gemeenten">Position face aux communes comparables</h2>
+        <p class="bc-note" data-nl="Euro per inwoner. Punt: begroting 2026; ruit: simulatie.">Euros par habitant. Point : budget 2026 ; losange : simulation.</p>
+        <div class="bc-chart" id="s-chart" data-source="communes" style="min-height:300px"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ METHODE ============ -->
+  <section class="bc-page" id="methode" hidden>
+    <div class="bc-card wide bc-method">
+      <h2 data-nl="Bronnen en methode">Sources et méthode</h2>
+      <p data-nl="Begrotingen 2026: Vlaanderen, BBC-rapportering (gemeente en OCMW samen) van het Agentschap Binnenlands Bestuur; Brussel, bestand van Brussel Plaatselijke Besturen; Wallonië, begrotingen gepubliceerd door de gemeenten (begrotingsartikels, eComptes-syntheses of de samenvattende tabel van de raadsbeslissingen).">Budgets 2026 : Flandre, rapport BBC (commune et CPAS ensemble) publié par l'Agence flamande de l'administration intérieure ; Bruxelles, fichier de Bruxelles Pouvoirs Locaux ; Wallonie, budgets publiés par les communes (articles budgétaires, synthèses eComptes ou tableau récapitulatif des délibérations).</p>
+      <p data-nl="Indicatoren: Statbel (bevolking 2025 en 2015, fiscale inkomens 2023, beschikbaar inkomen, kadaster en bodembezetting 2025, gebouwenpark 2025, btw-plichtige ondernemingen 2024, vastgoedverkopen) en OpenStreetMap (wegen en voorzieningen).">Indicateurs : Statbel (population 2025 et 2015, revenus fiscaux 2023, revenu disponible, cadastre et occupation du sol 2025, parc de bâtiments 2025, entreprises assujetties à la TVA 2024, ventes immobilières) et OpenStreetMap (voirie et équipements).</p>
+      <h3 data-nl="Lezing">Lecture</h3>
+      <ul>
+        <li data-nl="Vergelijkingen gebeuren binnen een gewest: de boekhoudregels en de perimeter verschillen (de Vlaamse begroting omvat het OCMW).">Les comparaisons se font au sein d'une région : les règles comptables et le périmètre diffèrent (le budget flamand inclut le CPAS).</li>
+        <li data-nl="Een begroting is “bruikbaar” als haar betrouwbaarheid niet laag is. De opsplitsing naar aard en functie bestaat enkel voor opgesplitste begrotingen; de andere geven alleen totalen.">Un budget est « exploitable » quand sa fiabilité n'est pas faible. Le détail par nature et par fonction n'existe que pour les budgets ventilés ; les autres ne donnent que les totaux.</li>
+        <li data-nl="Een kenmerk wijst op een waarschijnlijke druk op de uitgaven of ontvangsten. Het becijfert het effect niet.">Une spécificité signale une pression probable sur les dépenses ou les recettes. Elle ne chiffre pas son effet.</li>
+        <li data-nl="OpenStreetMap toont waar een voorziening ligt, niet wie ze financiert.">OpenStreetMap indique où se trouve un équipement, pas qui le finance.</li>
+        <li data-nl="Het tarief van de aanvullende personenbelasting is een impliciet tarief: ingekohierde gemeentebelasting gedeeld door de staatsbelasting.">Le taux d'additionnel IPP est un taux implicite : impôt communal enrôlé divisé par l'impôt État.</li>
+        <li data-nl="De bronnen en betrouwbaarheidslabels van de begrotingen zijn in het Frans.">Les sources et niveaux de fiabilité des budgets sont libellés en français.</li>
+      </ul>
+      <h3 data-nl="Simulatie">Simulation</h3>
+      <ul>
+        <li data-nl="Elke hefboom vermenigvuldigt de overeenkomstige post van de begroting 2026. Het tarief van de aanvullende personenbelasting laat de opbrengst evenredig variëren.">Chaque levier multiplie le poste correspondant du budget 2026. Le taux d'additionnel IPP fait varier les additionnels IPP proportionnellement au taux.</li>
+        <li data-nl="Een bevolkingswijziging laat de aanvullende personenbelasting en de opcentiemen in dezelfde verhouding variëren en herberekent de bedragen per inwoner.">Une variation de population fait varier les additionnels IPP et précompte dans la même proportion, et recalcule les montants par habitant.</li>
+        <li data-nl="Niets wordt bewaard: de simulatie verdwijnt wanneer de pagina opnieuw wordt geladen.">Rien n'est enregistré : la simulation disparaît quand la page est rechargée.</li>
+      </ul>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  const S = window.BC = window.BC || {};
+  S.lang = S.lang || 'fr';
+  // bilingual string: L('texte', 'tekst')
+  const L = S.L = (fr, nl) => (S.lang === 'nl' ? nl : fr);
+  const fmtCache = {};
+  const nf = (key, opts) => {
+    const k = S.lang + key;
+    if (!fmtCache[k]) fmtCache[k] = new Intl.NumberFormat(S.lang === 'nl' ? 'nl-BE' : 'fr-BE', opts);
+    return fmtCache[k];
+  };
+  const ok = (v) => v != null && isFinite(v);
+  S.fmt = {
+    eur: (v) => (ok(v) ? nf('0', { maximumFractionDigits: 0 }).format(v) + ' €' : '—'),
+    eurc: (v) => (ok(v) ? (Math.abs(v) >= 1e5 ? nf('c', { notation: 'compact', maximumFractionDigits: 1 }).format(v) : nf('0', { maximumFractionDigits: 0 }).format(v)) + ' €' : '—'),
+    n0: (v) => (ok(v) ? nf('0', { maximumFractionDigits: 0 }).format(v) : '—'),
+    n1: (v) => (ok(v) ? nf('1', { maximumFractionDigits: 1 }).format(v) : '—'),
+    n2: (v) => (ok(v) ? nf('2', { maximumFractionDigits: 2 }).format(v) : '—'),
+    signedEur: (v) => (ok(v) ? (v > 0 ? '+' : v < 0 ? '−' : '') + S.fmt.eurc(Math.abs(v)) : '—'),
+  };
+  // indicator catalogue: key -> [fr, nl, unit, decimals, group]
+  S.IND = {
+    dep_expl_hab: ["Dépenses d'exploitation / hab.", 'Exploitatie-uitgaven / inw.', '€', 0, 'bud'],
+    rec_expl_hab: ["Recettes d'exploitation / hab.", 'Exploitatie-ontvangsten / inw.', '€', 0, 'bud'],
+    dep_inv_hab: ['Investissements / hab.', 'Investeringen / inw.', '€', 0, 'bud'],
+    dep_personnel_hab: ['Personnel / hab.', 'Personeel / inw.', '€', 0, 'bud'],
+    dep_fonctionnement_hab: ['Fonctionnement / hab.', 'Werking / inw.', '€', 0, 'bud'],
+    dep_transferts_hab: ['Transferts / hab.', 'Overdrachten / inw.', '€', 0, 'bud'],
+    dep_dette_hab: ['Dette / hab.', 'Schuld / inw.', '€', 0, 'bud'],
+    police_hab: ['Dotation zone de police / hab.', 'Dotatie politiezone / inw.', '€', 0, 'bud'],
+    secours_hab: ['Dotation zone de secours / hab.', 'Dotatie hulpverleningszone / inw.', '€', 0, 'bud'],
+    cpas_hab: ['Dotation CPAS / hab.', 'Dotatie OCMW / inw.', '€', 0, 'bud'],
+    rec_fiscalite_hab: ['Fiscalité / hab.', 'Fiscaliteit / inw.', '€', 0, 'bud'],
+    ipp_hab: ['Additionnels IPP / hab.', 'Aanvullende personenbelasting / inw.', '€', 0, 'bud'],
+    pri_hab: ['Additionnels précompte immobilier / hab.', 'Opcentiemen onroerende voorheffing / inw.', '€', 0, 'bud'],
+    taxes_locales_hab: ['Taxes locales / hab.', 'Lokale belastingen / inw.', '€', 0, 'bud'],
+    rec_dotations_hab: ['Dotations et subsides / hab.', 'Dotaties en subsidies / inw.', '€', 0, 'bud'],
+    fonds_hab: ['Fonds des communes / hab.', 'Gemeentefonds / inw.', '€', 0, 'bud'],
+    rec_prestations_hab: ['Prestations / hab.', 'Prestaties / inw.', '€', 0, 'bud'],
+    population: ['Population', 'Bevolking', 'hab', 0, 'pop'],
+    croissance_pop_2015_2025_pct: ['Croissance de la population 2015-2025', 'Bevolkingsgroei 2015-2025', '%', 1, 'pop'],
+    part_0_2_pct: ['Part des 0-2 ans', 'Aandeel 0-2-jarigen', '%', 1, 'pop'],
+    part_3_11_pct: ['Part des 3-11 ans', 'Aandeel 3-11-jarigen', '%', 1, 'pop'],
+    part_0_17_pct: ['Part des 0-17 ans', 'Aandeel 0-17-jarigen', '%', 1, 'pop'],
+    part_65p_pct: ['Part des 65 ans et plus', 'Aandeel 65-plussers', '%', 1, 'pop'],
+    part_80p_pct: ['Part des 80 ans et plus', 'Aandeel 80-plussers', '%', 1, 'pop'],
+    part_etrangers_pct: ['Part des étrangers', 'Aandeel vreemdelingen', '%', 1, 'pop'],
+    age_moyen: ['Âge moyen', 'Gemiddelde leeftijd', 'ans', 1, 'pop'],
+    revenu_imposable_par_habitant: ['Revenu imposable / hab.', 'Belastbaar inkomen / inw.', '€', 0, 'rich'],
+    revenu_disponible_median_menage: ['Revenu disponible médian', 'Mediaan beschikbaar inkomen', '€', 0, 'rich'],
+    taux_risque_pauvrete_pct: ['Taux de risque de pauvreté', 'Armoederisico', '%', 1, 'rich'],
+    taux_implicite_additionnel_ipp_pct: ['Taux implicite additionnel IPP', 'Impliciet tarief aanvullende personenbelasting', '%', 2, 'rich'],
+    revenu_cadastral_par_habitant: ['Revenu cadastral / hab.', 'Kadastraal inkomen / inw.', '€', 0, 'rich'],
+    revenu_cadastral_exonere_pct: ['Revenu cadastral exonéré', 'Vrijgesteld kadastraal inkomen', '%', 1, 'rich'],
+    prix_median_maison: ["Prix médian d'une maison", 'Mediaanprijs van een woning', '€', 0, 'rich'],
+    rc_economique_pct: ['Part économique du revenu cadastral', 'Economisch aandeel van het KI', '%', 1, 'eco'],
+    entreprises_par_1000_hab: ['Entreprises TVA / 1 000 hab.', 'Btw-plichtige ondernemingen / 1 000 inw.', '', 1, 'eco'],
+    horeca_par_1000_hab: ['Horeca / 1 000 hab.', 'Horeca / 1 000 inw.', '', 1, 'eco'],
+    hebergements_par_1000_hab: ['Hôtels et campings / 1 000 hab.', 'Hotels en campings / 1 000 inw.', '', 2, 'eco'],
+    superficie_km2: ['Superficie', 'Oppervlakte', 'km²', 1, 'terr'],
+    densite_hab_km2: ['Densité', 'Dichtheid', 'hab/km²', 0, 'terr'],
+    sections_villages: ['Sections (anciennes communes)', 'Deelgemeenten', '', 0, 'terr'],
+    sol_bati_pct: ['Sol bâti', 'Bebouwde grond', '%', 1, 'terr'],
+    sol_bois_pct: ['Bois', 'Bos', '%', 1, 'terr'],
+    km_voirie_locale_par_1000_hab: ['Voirie locale (km / 1 000 hab.)', 'Lokale wegen (km / 1 000 inw.)', 'km', 2, 'terr'],
+    batiments_avant_1946_pct: ["Bâtiments d'avant 1946", 'Gebouwen van vóór 1946', '%', 1, 'terr'],
+    n_piscine: ['Piscines', 'Zwembaden', '', 0, 'equ'],
+    n_ecole: ['Écoles', 'Scholen', '', 0, 'equ'],
+    n_hall_sportif_par_10000_hab: ['Halls sportifs / 10 000 hab.', 'Sporthallen / 10 000 inw.', '', 1, 'equ'],
+    n_hopital: ['Hôpitaux', 'Ziekenhuizen', '', 0, 'equ'],
+    n_gare: ['Gares', 'Stations', '', 0, 'equ'],
+  };
+  S.GROUPS = { bud: ['Budget 2026', 'Begroting 2026'], pop: ['Population', 'Bevolking'], rich: ['Richesse et fiscalité', 'Welvaart en fiscaliteit'], eco: ['Activité économique', 'Economische activiteit'], terr: ['Territoire', 'Grondgebied'], equ: ['Équipements', 'Voorzieningen'] };
+  S.UNITS = { hab: ['hab.', 'inw.'], 'hab/km²': ['hab./km²', 'inw./km²'], ans: ['ans', 'jaar'] };
+  S.REGIONS = ['Wallonie', 'Flandre', 'Bruxelles'];
+  S.REGNAME = { Wallonie: ['Wallonie', 'Wallonië'], Flandre: ['Flandre', 'Vlaanderen'], Bruxelles: ['Bruxelles', 'Brussel'], Belgique: ['Belgique', 'België'] };
+  S.FONCTIONS = {
+    '0 Recettes et dépenses générales': 'Algemene ontvangsten en uitgaven', '1 Administration générale': 'Algemeen bestuur', '3 Sécurité': 'Veiligheid',
+    '4 Voiries-communications': 'Wegen en verkeer', '5 Industrie - commerce': 'Nijverheid en handel', '6 Sylviculture - Agriculture': 'Bosbouw en landbouw',
+    '70>75 Enseignement': 'Onderwijs', '76>77 Culture et sports': 'Cultuur en sport', '78 Radio, télévision, presse': 'Radio, televisie, pers', '79 Culte': 'Erediensten',
+    '80>86 Action sociale': 'Sociale actie', '87 Santé publique et hygiène': 'Volksgezondheid en hygiëne', '90>92 Logement': 'Huisvesting', '93 Aménagement du territoire': 'Ruimtelijke ordening',
+  };
+  S.POSTENL = { Personnel: 'Personeel', Fonctionnement: 'Werking', Transferts: 'Overdrachten', Dette: 'Schuld', Autres: 'Overige', Fiscalité: 'Fiscaliteit', 'Dotations et subsides': 'Dotaties en subsidies', Prestations: 'Prestaties', Dépenses: 'Uitgaven', Recettes: 'Ontvangsten' };
+  S.fonction = (f) => (S.lang === 'nl' ? f.split(' ')[0] + ' ' + (S.FONCTIONS[f] || f.slice(f.indexOf(' ') + 1)) : f);
+  S.poste = (p) => (S.lang === 'nl' ? S.POSTENL[p] || p : p);
+  S.reg = (r) => (S.REGNAME[r] ? S.REGNAME[r][S.lang === 'nl' ? 1 : 0] : r);
+  S.name = (r) => (S.lang === 'nl' ? r.commune_nl || r.commune : r.commune);
+  S.prov = (r) => (S.lang === 'nl' ? r.province_nl || r.province : r.province);
+  S.statut = (s) => ({ fiable: L('fiable', 'betrouwbaar'), faible: L('peu fiable', 'weinig betrouwbaar'), absent: L('absent', 'ontbreekt') }[s] || s);
+
+  S.state = S.state || { tab: 'apercu', region: 'Belgique', ind: 'dep_expl_hab', x: 'revenu_imposable_par_habitant', y: 'dep_expl_hab',
+    nis: '62063', search: '', sort: { key: 'ind', dir: -1 }, dims: ['taille', 'territoire', 'richesse', 'age'], k: 10 };
+  S.sim = S.sim || { nis: null, lev: {}, lines: [] };
+
+  S.label = (k) => (S.IND[k] ? S.IND[k][S.lang === 'nl' ? 1 : 0] : k);
+  S.fmtInd = (k, v) => {
+    if (v == null || !isFinite(v)) return '—';
+    const m = S.IND[k];
+    if (!m) return S.fmt.n1(v);
+    const d = m[3] === 0 ? S.fmt.n0(v) : m[3] === 1 ? S.fmt.n1(v) : S.fmt.n2(v);
+    const u = S.UNITS[m[2]] ? S.UNITS[m[2]][S.lang === 'nl' ? 1 : 0] : m[2];
+    return u === '€' ? d + ' €' : u === '%' ? d + ' %' : u ? d + ' ' + u : d;
+  };
+  S.colorOf = (region) => dash.colors[Math.max(0, S.REGIONS.indexOf(region))];
+  S.median = (a) => (a.length ? d3.median(a) : null);
+  S.pctCache = {};
+  // percentile of a value within its region (rank / n)
+  S.pct = (rows, key, row) => {
+    const ck = key + '|' + row.region;
+    if (!S.pctCache[ck]) S.pctCache[ck] = rows.filter((r) => r.region === row.region && r[key] != null).map((r) => r[key]).sort((a, b) => a - b);
+    const a = S.pctCache[ck];
+    if (row[key] == null || !a.length) return null;
+    return 100 * d3.bisectRight(a, row[key]) / a.length;
+  };
+  S.tip = (box) => {
+    let t = box.querySelector('.bc-tip');
+    if (!t) { t = document.createElement('div'); t.className = 'bc-tip'; t.hidden = true; box.appendChild(t); }
+    return {
+      show(ev, lines) {
+        t.replaceChildren(...lines.map((l, i) => { const d = document.createElement('div'); if (i === 0) { const b = document.createElement('b'); b.textContent = l; d.appendChild(b); } else { d.textContent = l; d.className = i === 1 ? 'muted' : ''; } return d; }));
+        t.hidden = false;
+        const r = box.getBoundingClientRect();
+        let x = ev.clientX - r.left + 12, y = ev.clientY - r.top + 12;
+        const w = t.offsetWidth, h = t.offsetHeight;
+        if (x + w > r.width) x = Math.max(0, ev.clientX - r.left - w - 12);
+        if (y + h > r.height) y = Math.max(0, ev.clientY - r.top - h - 12);
+        t.style.left = x + 'px'; t.style.top = y + 'px';
+      },
+      hide() { t.hidden = true; },
+    };
+  };
+  S.failed = (el) => { el.replaceChildren(); const d = document.createElement('div'); d.className = 'bc-failed'; d.textContent = 'Failed to load'; el.appendChild(d); };
+  S.empty = (el, txt) => { el.replaceChildren(); const p = document.createElement('p'); p.className = 'bc-empty'; p.textContent = txt; el.appendChild(p); };
+  S.useLog = (vals) => { const pos = vals.filter((v) => v > 0); return pos.length === vals.length && pos.length > 1 && d3.max(pos) / d3.min(pos) > 80; };
+  S.axisClean = (g) => { g.attr('font-size', null).attr('font-family', null); g.selectAll('text').attr('fill', 'var(--color-fg-muted)').style('font-size', 'var(--cds-font-size-caption)'); g.selectAll('line,path').attr('stroke', 'var(--cds-chart-axis)'); };
+  S.safe = (fns) => fns.forEach((f) => { try { f(); } catch (e) { setTimeout(() => { throw e; }); } });
+
+  // peers: same region, usable budget, nearest on standardized dimensions
+  S.DIMS = {
+    taille: [['Taille', 'Omvang'], [['population', true]]],
+    territoire: [['Territoire', 'Grondgebied'], [['densite_hab_km2', true], ['superficie_km2', true], ['sections_villages', false]]],
+    richesse: [['Richesse', 'Welvaart'], [['revenu_imposable_par_habitant', false], ['taux_risque_pauvrete_pct', false]]],
+    age: [['Âge', 'Leeftijd'], [['part_0_17_pct', false], ['part_65p_pct', false]]],
+    economie: [['Activité économique', 'Economische activiteit'], [['rc_economique_pct', false], ['entreprises_par_1000_hab', false]]],
+    immobilier: [['Base immobilière', 'Vastgoedbasis'], [['revenu_cadastral_par_habitant', false]]],
+    tourisme: [['Tourisme', 'Toerisme'], [['horeca_par_1000_hab', false]]],
+  };
+  S.peers = (rows, c) => {
+    if (!c) return [];
+    const reg = rows.filter((r) => r.region === c.region);
+    const feats = S.state.dims.flatMap((d) => (S.DIMS[d] ? S.DIMS[d][1] : []));
+    if (!feats.length) return [];
+    const stats = feats.map(([k, lg]) => {
+      const v = reg.map((r) => r[k]).filter((x) => x != null && (!lg || x > 0)).map((x) => (lg ? Math.log(x) : x));
+      return [k, lg, d3.mean(v), d3.deviation(v) || 1];
+    });
+    const z = (r, [k, lg, m, s]) => (r[k] == null || (lg && r[k] <= 0) ? null : ((lg ? Math.log(r[k]) : r[k]) - m) / s);
+    const zc = stats.map((st) => z(c, st));
+    return reg.filter((r) => r.nis !== c.nis && r.budget_statut === 'fiable' && r.dep_expl_hab != null)
+      .map((r) => {
+        let s = 0, n = 0;
+        stats.forEach((st, i) => { const a = zc[i], b = z(r, st); if (a != null && b != null) { s += (a - b) ** 2; n++; } });
+        return { r, d: n ? Math.sqrt(s / n) : Infinity };
+      })
+      .sort((a, b) => a.d - b.d).slice(0, S.state.k).map((x) => x.r);
+  };
+
+  // simulation model: base amounts (€) from the per-inhabitant figures of the 2026 budget
+  S.POSTES = [
+    ['dep_personnel_hab', ['Personnel', 'Personeel'], 'dep'], ['dep_fonctionnement_hab', ['Fonctionnement', 'Werking'], 'dep'], ['dep_transferts_hab', ['Transferts', 'Overdrachten'], 'dep'],
+    ['dep_dette_hab', ['Dette', 'Schuld'], 'dep'], ['dep_autres_hab', ['Autres dépenses', 'Overige uitgaven'], 'dep'],
+    ['rec_fiscalite_hab', ['Fiscalité', 'Fiscaliteit'], 'rec'], ['rec_dotations_hab', ['Dotations et subsides', 'Dotaties en subsidies'], 'rec'], ['rec_prestations_hab', ['Prestations', 'Prestaties'], 'rec'], ['rec_autres_hab', ['Autres recettes', 'Overige ontvangsten'], 'rec'],
+  ];
+  S.LEVERS = [
+    ['personnel', ['Personnel', 'Personeel'], '%', 'dep_personnel_hab'], ['fonctionnement', ['Fonctionnement (énergie, entretien…)', 'Werking (energie, onderhoud…)'], '%', 'dep_fonctionnement_hab'],
+    ['police', ['Dotation zone de police', 'Dotatie politiezone'], '%', 'police_hab'], ['secours', ['Dotation zone de secours', 'Dotatie hulpverleningszone'], '%', 'secours_hab'],
+    ['cpas', ['Dotation CPAS', 'Dotatie OCMW'], '%', 'cpas_hab'], ['transferts', ['Autres transferts', 'Overige overdrachten'], '%', 'dep_transferts_hab'], ['dette', ['Charges de la dette', 'Schuldlasten'], '%', 'dep_dette_hab'],
+    ['ipp_taux', ["Taux d'additionnel IPP (nouveau taux)", 'Tarief aanvullende personenbelasting (nieuw tarief)'], 'taux', 'ipp_hab'], ['pri', ['Additionnels au précompte immobilier', 'Opcentiemen onroerende voorheffing'], '%', 'pri_hab'],
+    ['taxes', ['Taxes locales', 'Lokale belastingen'], '%', 'taxes_locales_hab'], ['prestations', ['Tarifs et prestations', 'Tarieven en prestaties'], '%', 'rec_prestations_hab'],
+    ['dotations', ['Fonds et dotations régionales', 'Gewestelijke fondsen en dotaties'], '%', 'rec_dotations_hab'], ['population', ['Population', 'Bevolking'], '%', null],
+  ];
+  S.LEVERS_TOTAL = [['dep_tot', ["Dépenses d'exploitation", 'Exploitatie-uitgaven'], '%', 'dep_expl_hab'], ['rec_tot', ["Recettes d'exploitation", 'Exploitatie-ontvangsten'], '%', 'rec_expl_hab'], ['population', ['Population', 'Bevolking'], '%', null]];
+  S.simActive = () => S.sim.nis && (Object.values(S.sim.lev).some((v) => v != null && v !== '' && Number(v) !== 0) || S.sim.lines.some((l) => Number(l.montant)));
+  S.simulate = (c) => {
+    if (!c) return null;
+    const Lv = (k) => { const v = Number(S.sim.lev[k]); return isFinite(v) ? v / 100 : 0; };
+    const pop0 = c.population, g = Lv('population'), pop1 = pop0 * (1 + g);
+    const A = (k) => (c[k] == null ? 0 : c[k] * pop0);
+    const lines = S.sim.lines.filter((l) => Number(l.montant));
+    const rows = [];
+    let extra = {};
+    if (c.budget_ventile) {
+      const pol = A('police_hab'), sec = A('secours_hab'), cp = A('cpas_hab'), tr = A('dep_transferts_hab');
+      const trAutres = Math.max(0, tr - pol - sec - cp);
+      const ipp = A('ipp_hab'), pri = A('pri_hab'), tax = A('taxes_locales_hab'), fisc = A('rec_fiscalite_hab');
+      const t0 = c.taux_implicite_additionnel_ipp_pct, t1 = Number(S.sim.lev.ipp_taux);
+      const hasT = S.sim.lev.ipp_taux != null && S.sim.lev.ipp_taux !== '' && isFinite(t1) && t0;
+      const ippScale = (hasT ? t1 / t0 : 1) * (1 + g);
+      const fiscAutres = Math.max(0, fisc - ipp - pri - tax);
+      const sim = {
+        dep_personnel_hab: A('dep_personnel_hab') * (1 + Lv('personnel')),
+        dep_fonctionnement_hab: A('dep_fonctionnement_hab') * (1 + Lv('fonctionnement')),
+        dep_transferts_hab: trAutres * (1 + Lv('transferts')) + pol * (1 + Lv('police')) + sec * (1 + Lv('secours')) + cp * (1 + Lv('cpas')),
+        dep_dette_hab: A('dep_dette_hab') * (1 + Lv('dette')),
+        dep_autres_hab: A('dep_autres_hab'),
+        rec_fiscalite_hab: fiscAutres + ipp * ippScale + pri * (1 + Lv('pri')) * (1 + g) + tax * (1 + Lv('taxes')),
+        rec_dotations_hab: A('rec_dotations_hab') * (1 + Lv('dotations')),
+        rec_prestations_hab: A('rec_prestations_hab') * (1 + Lv('prestations')),
+        rec_autres_hab: A('rec_autres_hab'),
+      };
+      S.POSTES.forEach(([k, lab, s]) => rows.push({ k, lab: lab[S.lang === 'nl' ? 1 : 0], s, v0: A(k), v1: sim[k] }));
+      const ex = { police_hab: pol * (1 + Lv('police')), secours_hab: sec * (1 + Lv('secours')), cpas_hab: cp * (1 + Lv('cpas')),
+        ipp_hab: ipp * ippScale, pri_hab: pri * (1 + Lv('pri')) * (1 + g), taxes_locales_hab: tax * (1 + Lv('taxes')), fonds_hab: A('fonds_hab') * (1 + Lv('dotations')) };
+      extra = Object.fromEntries(Object.entries(ex).map(([k, v]) => [k, c[k] == null ? null : v / pop1]));
+    } else {
+      rows.push({ k: 'dep_expl_hab', lab: L("Dépenses d'exploitation", 'Exploitatie-uitgaven'), s: 'dep', v0: A('dep_expl_hab'), v1: A('dep_expl_hab') * (1 + Lv('dep_tot')) });
+      rows.push({ k: 'rec_expl_hab', lab: L("Recettes d'exploitation", 'Exploitatie-ontvangsten'), s: 'rec', v0: A('rec_expl_hab'), v1: A('rec_expl_hab') * (1 + Lv('rec_tot')) });
+    }
+    lines.forEach((l, i) => rows.push({ k: 'ligne' + i, lab: l.libelle || L('Ligne ajoutée', 'Toegevoegde lijn'), s: l.sens, v0: 0, v1: Number(l.montant) }));
+    const sum = (s, f) => d3.sum(rows.filter((r) => r.s === s), (r) => r[f]);
+    const dep0 = sum('dep', 'v0'), dep1 = sum('dep', 'v1'), rec0 = sum('rec', 'v0'), rec1 = sum('rec', 'v1');
+    const perHab = {};
+    rows.forEach((r) => { if (!r.k.startsWith('ligne')) perHab[r.k] = c[r.k] == null ? null : r.v1 / pop1; });
+    Object.assign(perHab, extra);
+    perHab.dep_expl_hab = dep1 / pop1; perHab.rec_expl_hab = rec1 / pop1;
+    return { rows, dep0, dep1, rec0, rec1, pop0, pop1, perHab };
+  };
+
+  // static texts: data-nl (text) and data-nl-ph (placeholder); French kept in data-fr
+  S.applyStatic = () => {
+    document.querySelectorAll('.bc [data-nl]').forEach((el) => {
+      if (el.dataset.fr == null) el.dataset.fr = el.textContent;
+      el.textContent = S.lang === 'nl' ? el.dataset.nl : el.dataset.fr;
+    });
+    document.querySelectorAll('.bc [data-nl-ph]').forEach((el) => {
+      if (el.dataset.frPh == null) el.dataset.frPh = el.placeholder;
+      el.placeholder = S.lang === 'nl' ? el.dataset.nlPh : el.dataset.frPh;
+    });
+    document.querySelectorAll('.bc-lang button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.lang === S.lang)));
+  };
+})();
+</script>
+
+<script>
+// ---------- data, calculations, tabs, language ----------
+(function () {
+  const S = window.BC;
+  dash.calc('stats_region', {
+    inputs: ['communes'],
+    title: 'Chiffres clés par région / Kerncijfers per gewest',
+    description: "Nombre de communes, population, médianes et total des dépenses d'exploitation 2026 (budgets exploitables).",
+    fn: (communes) => ['Belgique', 'Wallonie', 'Flandre', 'Bruxelles'].map((region) => {
+      const rs = communes.filter((c) => region === 'Belgique' || c.region === region);
+      const ok = rs.filter((c) => c.budget_statut === 'fiable' && c.dep_expl_hab != null);
+      return {
+        region,
+        communes: rs.length,
+        communes_budget: ok.length,
+        population: d3.sum(rs, (c) => c.population),
+        population_budget: d3.sum(ok, (c) => c.population),
+        dep_expl_mediane_hab: Math.round(d3.median(ok, (c) => c.dep_expl_hab)),
+        rec_expl_mediane_hab: Math.round(d3.median(ok.filter((c) => c.rec_expl_hab != null), (c) => c.rec_expl_hab)),
+        dep_expl_total: d3.sum(ok, (c) => c.dep_expl_total),
+      };
+    }),
+  });
+  dash.calc('natures_region', {
+    inputs: ['communes'],
+    title: 'Budget par nature et par région / Begroting per aard en gewest',
+    description: 'Moyenne par habitant de chaque nature de dépense et de recette (somme des montants / somme des habitants), budgets ventilés.',
+    fn: (communes) => {
+      const postes = [['dep_personnel_hab', 'Personnel', 'Dépenses'], ['dep_fonctionnement_hab', 'Fonctionnement', 'Dépenses'], ['dep_transferts_hab', 'Transferts', 'Dépenses'], ['dep_dette_hab', 'Dette', 'Dépenses'], ['dep_autres_hab', 'Autres', 'Dépenses'],
+        ['rec_fiscalite_hab', 'Fiscalité', 'Recettes'], ['rec_dotations_hab', 'Dotations et subsides', 'Recettes'], ['rec_prestations_hab', 'Prestations', 'Recettes'], ['rec_autres_hab', 'Autres', 'Recettes']];
+      const out = [];
+      ['Wallonie', 'Flandre', 'Bruxelles'].forEach((region) => {
+        const rs = communes.filter((c) => c.region === region && c.budget_ventile);
+        const pop = d3.sum(rs, (c) => c.population);
+        postes.forEach(([k, poste, sens]) => out.push({ region, sens, poste, moyenne_hab: Math.round(d3.sum(rs, (c) => (c[k] || 0) * c.population) / pop), communes: rs.length }));
+      });
+      return out;
+    },
+  });
+  dash.calc('fonctions_region', {
+    inputs: ['fonctions', 'communes'],
+    title: 'Dépenses par fonction et par région / Uitgaven per functie en gewest',
+    description: "Moyenne par habitant des dépenses d'exploitation de chaque groupe de fonctions, communes ventilées par fonction.",
+    fn: (fonctions, communes) => {
+      const pop = new Map(communes.map((c) => [c.nis, c]));
+      const out = [];
+      ['Wallonie', 'Flandre', 'Bruxelles'].forEach((region) => {
+        const rows = fonctions.filter((f) => pop.get(f.nis) && pop.get(f.nis).region === region);
+        const nisSet = new Set(rows.map((f) => f.nis));
+        const popTot = d3.sum([...nisSet], (n) => pop.get(n).population);
+        d3.rollups(rows, (v) => d3.sum(v, (f) => f.dep_hab * pop.get(f.nis).population), (f) => f.fonction)
+          .forEach(([fonction, tot]) => out.push({ region, fonction, moyenne_hab: Math.round(tot / popTot) }));
+      });
+      return out;
+    },
+  });
+
+  const tabs = [...document.querySelectorAll('.bc-tab')];
+  S.showTab = (t) => {
+    S.state.tab = t;
+    tabs.forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === t)));
+    ['apercu', 'commune', 'simulation', 'methode'].forEach((id) => { document.getElementById(id).hidden = id !== t; });
+    dash.setLink(t);
+    S.render();
+  };
+  tabs.forEach((b) => b.addEventListener('click', () => S.showTab(b.dataset.tab)));
+  document.querySelectorAll('.bc-lang button').forEach((b) => b.addEventListener('click', () => {
+    S.lang = b.dataset.lang;
+    S.langChanged = true;
+    S.render();
+  }));
+
+  S.select = (nis, tab) => {
+    S.state.nis = nis;
+    if (tab) S.showTab(tab); else S.render();
+  };
+
+  S.render = () => {
+    S.applyStatic();
+    const c = dash.data('communes');
+    const st = dash.data('stats_region');
+    const ok = c.status === 'ok';
+    const txt = ['nis', 'commune', 'commune_nl', 'region', 'province', 'province_nl'];
+    S.rows = ok ? c.data.map((r) => {
+      const o = { ...r };
+      Object.keys(o).forEach((k) => { if (!txt.includes(k) && k.indexOf('budget_') !== 0 && o[k] != null && o[k] !== '') o[k] = Number(o[k]); });
+      o.nis = String(o.nis);
+      o.budget_ventile = r.budget_ventile === true || r.budget_ventile === 'true';
+      return o;
+    }) : [];
+    S.byNis = new Map(S.rows.map((r) => [r.nis, r]));
+    S.pctCache = {};
+    const lede = document.getElementById('lede');
+    if (st.status === 'ok') {
+      const b = st.data.find((r) => r.region === 'Belgique');
+      lede.textContent = S.L(
+        `${S.fmt.n0(b.communes_budget)} communes sur ${S.fmt.n0(b.communes)} ont un budget 2026 exploitable. Explorez les écarts entre communes, puis analysez une commune face à des communes comparables et simulez des changements.`,
+        `${S.fmt.n0(b.communes_budget)} van de ${S.fmt.n0(b.communes)} gemeenten hebben een bruikbare begroting 2026. Verken de verschillen tussen gemeenten, analyseer daarna een gemeente tegenover vergelijkbare gemeenten en simuleer wijzigingen.`);
+    }
+    if (S.state.tab === 'apercu' && S.renderApercu) S.renderApercu();
+    if (S.state.tab === 'commune' && S.renderCommune) S.renderCommune();
+    if (S.state.tab === 'simulation' && S.renderSimulation) S.renderSimulation();
+    S.langChanged = false;
+  };
+
+  dash.onData(() => S.render());
+  const named = location.hash.slice(1);
+  if (['apercu', 'commune', 'simulation', 'methode'].includes(named)) S.showTab(named);
+})();
+</script>
+
+<script>
+// ---------- VUE D'ENSEMBLE ----------
+(function () {
+  const S = window.BC;
+  const L = S.L;
+  const fillSelect = (sel, val) => {
+    if (sel.options.length && sel.dataset.lang === S.lang) { sel.value = val; return; }
+    sel.replaceChildren();
+    sel.dataset.lang = S.lang;
+    d3.groups(Object.entries(S.IND), ([, m]) => m[4]).forEach(([g, items]) => {
+      const og = document.createElement('optgroup'); og.label = S.GROUPS[g][S.lang === 'nl' ? 1 : 0];
+      items.forEach(([k]) => og.appendChild(new Option(S.label(k), k)));
+      sel.appendChild(og);
+    });
+    sel.value = val;
+  };
+  const fInd = document.getElementById('f-ind'), fX = document.getElementById('f-x'), fY = document.getElementById('f-y');
+  const fReg = document.getElementById('f-region'), fSearch = document.getElementById('f-search');
+  fInd.addEventListener('change', () => { S.state.ind = fInd.value; S.render(); });
+  fX.addEventListener('change', () => { S.state.x = fX.value; S.render(); });
+  fY.addEventListener('change', () => { S.state.y = fY.value; S.render(); });
+  fReg.addEventListener('change', () => { S.state.region = fReg.value; S.render(); });
+  fSearch.addEventListener('input', () => { S.state.search = fSearch.value; S.renderTable(); });
+  document.querySelectorAll('#classement th button').forEach((b) => b.addEventListener('click', () => {
+    const k = b.dataset.sort;
+    S.state.sort = { key: k, dir: S.state.sort.key === k ? -S.state.sort.dir : (k === 'commune' || k === 'region' ? 1 : -1) };
+    S.renderTable();
+  }));
+  document.querySelector('#classement tbody').addEventListener('click', (e) => {
+    const tr = e.target.closest('tr[data-key]');
+    if (tr) S.select(tr.dataset.key, 'commune');
+  });
+  const inRegion = (r) => S.state.region === 'Belgique' || r.region === S.state.region;
+  const lower = (s) => s.charAt(0).toLowerCase() + s.slice(1);
+
+  S.renderApercu = () => {
+    fillSelect(fInd, S.state.ind); fillSelect(fX, S.state.x); fillSelect(fY, S.state.y);
+    fReg.value = S.state.region;
+    const st = dash.data('stats_region');
+    [['t-communes', 'communes', S.fmt.n0], ['t-budget', 'communes_budget', S.fmt.n0], ['t-pop', 'population', S.fmt.n0],
+      ['t-dep', 'dep_expl_mediane_hab', S.fmt.eur], ['t-rec', 'rec_expl_mediane_hab', S.fmt.eur], ['t-total', 'dep_expl_total', S.fmt.eurc]].forEach(([id, f, fmt]) => {
+      const el = document.getElementById(id);
+      el.dataset.where = 'region=' + S.state.region;
+      if (st.status === 'ok') {
+        const row = st.data.find((r) => r.region === S.state.region);
+        el.textContent = fmt(row[f]);
+        el.classList.remove('dash-skeleton');
+        if (id === 't-budget') document.getElementById('t-budget-note').textContent = L(`${S.fmt.n0(100 * row.population_budget / row.population)} % de la population`, `${S.fmt.n0(100 * row.population_budget / row.population)} % van de bevolking`);
+      } else if (st.status === 'error') { el.textContent = '—'; el.classList.remove('dash-skeleton'); }
+    });
+    const lab = lower(S.label(S.state.ind));
+    document.getElementById('carte-titre').textContent = L('Carte : ', 'Kaart: ') + lab;
+    document.getElementById('distrib-titre').textContent = L('Distribution par région : ', 'Spreiding per gewest: ') + lab;
+    document.getElementById('classement-titre').textContent = L('Classement : ', 'Rangschikking: ') + lab;
+    const th = document.getElementById('classement-th');
+    th.dataset.field = S.state.ind;
+    th.querySelector('button').textContent = S.label(S.state.ind);
+    S.safe([S.renderMap, S.renderDistribution, S.renderScatter, S.renderNatures, S.renderFonctions, S.renderTable]);
+  };
+
+  S.renderMap = () => {
+    const box = document.getElementById('carte');
+    const cg = dash.data('carte'), cc = dash.data('communes');
+    if (cg.status === 'error' || cc.status === 'error') return S.failed(box);
+    if (cg.status !== 'ok' || cc.status !== 'ok') return;
+    // each feature holds its polygons, each polygon its outer ring
+    if (!S.geo) S.geo = cg.data.map((g) => ({ nis: String(g.nis), rings: (typeof g.rings === 'string' ? JSON.parse(g.rings) : g.rings).map((poly) => poly[0]).filter((ring) => ring && ring.length > 2) }));
+    const W = box.clientWidth || 600;
+    const geo = S.geo.filter((g) => { const r = S.byNis.get(g.nis); return r && inRegion(r); });
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    geo.forEach((g) => g.rings.forEach((ring) => ring.forEach(([x, y]) => { x0 = Math.min(x0, x); x1 = Math.max(x1, x); y0 = Math.min(y0, y); y1 = Math.max(y1, y); })));
+    const k = Math.cos((50.5 * Math.PI) / 180);
+    const sc = Math.min(W / ((x1 - x0) * k), 520 / (y1 - y0));
+    const H = Math.round((y1 - y0) * sc) + 4;
+    const px = (x) => (x - x0) * k * sc + (W - (x1 - x0) * k * sc) / 2, py = (y) => (y1 - y) * sc + 2;
+    // the theme colors can be oklch or color(): shade with opacity instead of mixing RGB values
+    const op = (t) => 0.1 + 0.9 * t;
+    const key = S.state.ind;
+    box.replaceChildren();
+    const svg = d3.select(box).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+    const tip = S.tip(box);
+    svg.selectAll('path').data(geo).join('path')
+      .attr('d', (g) => g.rings.map((ring) => 'M' + ring.map(([x, y]) => px(x).toFixed(1) + ',' + py(y).toFixed(1)).join('L') + 'Z').join(''))
+      .attr('fill', (g) => (S.pct(S.rows, key, S.byNis.get(g.nis)) == null ? 'var(--color-bg)' : dash.colors[0]))
+      .attr('fill-opacity', (g) => { const p = S.pct(S.rows, key, S.byNis.get(g.nis)); return p == null ? 1 : op(p / 100); })
+      .attr('stroke', (g) => (g.nis === S.state.nis ? 'var(--color-fg)' : 'var(--color-panel)'))
+      .attr('stroke-width', (g) => (g.nis === S.state.nis ? 2 : 0.4))
+      .style('cursor', 'pointer')
+      .on('mousemove', (ev, g) => { const r = S.byNis.get(g.nis); const p = S.pct(S.rows, key, r); tip.show(ev, [S.name(r), S.reg(r.region), S.label(key) + ' : ' + S.fmtInd(key, r[key]), p == null ? L('Pas de donnée', 'Geen gegevens') : L('Rang régional : ', 'Gewestelijke rang: ') + S.fmt.n0(p) + ' / 100']); })
+      .on('mouseleave', () => tip.hide())
+      .on('click', (ev, g) => S.select(g.nis, 'commune'));
+    svg.selectAll('path').filter((g) => g.nis === S.state.nis).raise();
+    const lg = document.getElementById('carte-legende');
+    lg.replaceChildren();
+    [[L('Rang bas', 'Lage rang'), 0.05], [L('Médian', 'Mediaan'), 0.5], [L('Rang haut', 'Hoge rang'), 0.95]].forEach(([t, v]) => { const s = document.createElement('span'); const sw = document.createElement('span'); sw.className = 'bc-sw'; sw.style.background = dash.colors[0]; sw.style.opacity = String(op(v)); s.append(sw, t); lg.appendChild(s); });
+    const s = document.createElement('span'); const sw = document.createElement('span'); sw.className = 'bc-sw'; sw.style.background = 'var(--color-bg)'; sw.style.border = '1px solid var(--color-border-line)'; s.append(sw, L('Pas de donnée', 'Geen gegevens')); lg.appendChild(s);
+  };
+
+  S.renderDistribution = () => {
+    const box = document.getElementById('distribution');
+    const cc = dash.data('communes');
+    if (cc.status === 'error') return S.failed(box);
+    if (cc.status !== 'ok') return;
+    const key = S.state.ind;
+    const regs = S.REGIONS.filter((g) => S.state.region === 'Belgique' || g === S.state.region);
+    const rows = S.rows.filter((r) => inRegion(r) && r[key] != null);
+    if (!rows.length) return S.empty(box, L('Pas de données pour cet indicateur.', 'Geen gegevens voor deze indicator.'));
+    box.replaceChildren();
+    const W = box.clientWidth || 500, band = 70, m = { l: 80, r: 16, t: 8, b: 28 };
+    const H = m.t + m.b + band * regs.length;
+    const vals = rows.map((r) => r[key]);
+    const log = S.useLog(vals);
+    const x = (log ? d3.scaleLog() : d3.scaleLinear()).domain(d3.extent(vals)).nice().range([m.l, W - m.r]);
+    const svg = d3.select(box).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+    svg.append('g').attr('transform', `translate(0,${H - m.b})`).call(d3.axisBottom(x).ticks(Math.max(3, Math.floor(W / 110)), '~s')).call(S.axisClean);
+    const tip = S.tip(box);
+    regs.forEach((g, i) => {
+      const y0 = m.t + i * band;
+      svg.append('text').attr('x', 0).attr('y', y0 + band / 2).attr('dy', '0.35em').attr('fill', 'var(--color-fg)').style('font-size', 'var(--cds-font-size-caption)').text(S.reg(g));
+      const rs = rows.filter((r) => r.region === g);
+      let seed = (i + 1) * 9301;
+      const rnd = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+      svg.append('g').selectAll('circle').data(rs).join('circle')
+        .attr('cx', (r) => x(r[key])).attr('cy', () => y0 + 10 + rnd() * (band - 20))
+        .attr('r', (r) => (r.nis === S.state.nis ? 6 : 2.6))
+        .attr('fill', (r) => (r.nis === S.state.nis ? 'var(--color-fg)' : S.colorOf(g)))
+        .attr('fill-opacity', (r) => (r.nis === S.state.nis ? 1 : 0.55))
+        .style('cursor', 'pointer')
+        .on('mousemove', (ev, r) => tip.show(ev, [S.name(r), S.label(key), S.fmtInd(key, r[key])]))
+        .on('mouseleave', () => tip.hide())
+        .on('click', (ev, r) => S.select(r.nis, 'commune'));
+      const med = d3.median(rs, (r) => r[key]);
+      if (med != null) {
+        svg.append('line').attr('x1', x(med)).attr('x2', x(med)).attr('y1', y0 + 4).attr('y2', y0 + band - 4).attr('stroke', 'var(--color-fg)').attr('stroke-width', 2);
+        svg.append('text').attr('x', x(med) + 4).attr('y', y0 + 10).attr('fill', 'var(--color-fg-muted)').style('font-size', 'var(--cds-font-size-caption)').text(L('médiane ', 'mediaan ') + S.fmtInd(key, med));
+      }
+    });
+    svg.selectAll('circle').filter((r) => r.nis === S.state.nis).raise();
+  };
+
+  S.renderScatter = () => {
+    const box = document.getElementById('nuage');
+    const cc = dash.data('communes');
+    if (cc.status === 'error') return S.failed(box);
+    if (cc.status !== 'ok') return;
+    const kx = S.state.x, ky = S.state.y;
+    const rows = S.rows.filter((r) => inRegion(r) && r[kx] != null && r[ky] != null);
+    if (!rows.length) return S.empty(box, L('Pas de données pour ce croisement.', 'Geen gegevens voor deze combinatie.'));
+    box.replaceChildren();
+    const W = box.clientWidth || 700, H = 380, m = { l: 64, r: 16, t: 10, b: 40 };
+    const lx = S.useLog(rows.map((r) => r[kx])), ly = S.useLog(rows.map((r) => r[ky]));
+    const x = (lx ? d3.scaleLog() : d3.scaleLinear()).domain(d3.extent(rows, (r) => r[kx])).nice().range([m.l, W - m.r]);
+    const y = (ly ? d3.scaleLog() : d3.scaleLinear()).domain(d3.extent(rows, (r) => r[ky])).nice().range([H - m.b, m.t]);
+    const rad = d3.scaleSqrt().domain([0, d3.max(rows, (r) => r.population)]).range([1.5, 18]);
+    const svg = d3.select(box).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+    svg.append('g').selectAll('line').data(y.ticks(6)).join('line').attr('x1', m.l).attr('x2', W - m.r).attr('y1', (d) => y(d)).attr('y2', (d) => y(d)).attr('stroke', 'var(--cds-chart-grid)');
+    svg.append('g').attr('transform', `translate(0,${H - m.b})`).call(d3.axisBottom(x).ticks(Math.max(3, Math.floor(W / 120)), '~s')).call(S.axisClean);
+    svg.append('g').attr('transform', `translate(${m.l},0)`).call(d3.axisLeft(y).ticks(6, '~s')).call(S.axisClean);
+    const logTxt = L(' (échelle log)', ' (logschaal)');
+    svg.append('text').attr('x', W - m.r).attr('y', H - 6).attr('text-anchor', 'end').attr('fill', 'var(--color-fg-muted)').style('font-size', 'var(--cds-font-size-caption)').text(S.label(kx) + (lx ? logTxt : ''));
+    svg.append('text').attr('x', m.l + 4).attr('y', m.t + 10).attr('fill', 'var(--color-fg-muted)').style('font-size', 'var(--cds-font-size-caption)').text(S.label(ky) + (ly ? logTxt : ''));
+    const tip = S.tip(box);
+    svg.append('g').selectAll('circle').data(rows.sort((a, b) => b.population - a.population)).join('circle')
+      .attr('cx', (r) => x(r[kx])).attr('cy', (r) => y(r[ky])).attr('r', (r) => rad(r.population))
+      .attr('fill', (r) => (r.nis === S.state.nis ? 'var(--color-fg)' : S.colorOf(r.region))).attr('fill-opacity', (r) => (r.nis === S.state.nis ? 1 : 0.5))
+      .attr('stroke', 'var(--color-panel)').attr('stroke-width', 0.5).style('cursor', 'pointer')
+      .on('mousemove', (ev, r) => tip.show(ev, [S.name(r), S.reg(r.region) + ' · ' + S.fmtInd('population', r.population), S.label(kx) + ' : ' + S.fmtInd(kx, r[kx]), S.label(ky) + ' : ' + S.fmtInd(ky, r[ky])]))
+      .on('mouseleave', () => tip.hide())
+      .on('click', (ev, r) => S.select(r.nis, 'commune'));
+    svg.selectAll('circle').filter((r) => r && r.nis === S.state.nis).raise();
+    const lg = document.getElementById('nuage-legende'); lg.replaceChildren();
+    S.REGIONS.filter((g) => S.state.region === 'Belgique' || g === S.state.region).forEach((g) => { const s = document.createElement('span'); const sw = document.createElement('span'); sw.className = 'bc-sw'; sw.style.background = S.colorOf(g); s.append(sw, S.reg(g)); lg.appendChild(s); });
+  };
+
+  const stacked = (box, legend, data, catKey, valKey, order, catLabel) => {
+    box.replaceChildren(); legend.replaceChildren();
+    const regs = S.REGIONS.filter((g) => S.state.region === 'Belgique' || g === S.state.region);
+    const groups = [];
+    regs.forEach((g) => order.groups.forEach((grp) => groups.push({ region: g, grp })));
+    const W = box.clientWidth || 500, m = { l: 150, r: 60, t: 4, b: 24 }, bh = 22, gap = 8;
+    const H = m.t + m.b + groups.length * (bh + gap) + regs.length * 10;
+    const totals = groups.map((gr) => d3.sum(data.filter((d) => d.region === gr.region && (order.grpOf ? order.grpOf(d) === gr.grp : true)), (d) => Math.max(0, d[valKey])));
+    const x = d3.scaleLinear().domain([0, d3.max(totals) || 1]).nice().range([m.l, W - m.r]);
+    const svg = d3.select(box).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+    svg.append('g').attr('transform', `translate(0,${H - m.b})`).call(d3.axisBottom(x).ticks(Math.max(3, Math.floor(W / 120))).tickFormat((v) => S.fmt.n0(v) + ' €')).call(S.axisClean);
+    const tip = S.tip(box);
+    let yy = m.t;
+    groups.forEach((gr, i) => {
+      if (i > 0 && gr.region !== groups[i - 1].region) yy += 10;
+      svg.append('text').attr('x', m.l - 8).attr('y', yy + bh / 2).attr('dy', '0.35em').attr('text-anchor', 'end').attr('fill', 'var(--color-fg)').style('font-size', 'var(--cds-font-size-caption)').text(S.reg(gr.region) + (order.groups.length > 1 ? ' · ' + S.poste(gr.grp) : ''));
+      let acc = 0;
+      order.cats.forEach((cat, ci) => {
+        const d = data.find((r) => r.region === gr.region && r[catKey] === cat && (order.grpOf ? order.grpOf(r) === gr.grp : true));
+        if (!d || !(d[valKey] > 0)) return;
+        svg.append('rect').attr('x', x(acc)).attr('y', yy).attr('width', Math.max(0, x(acc + d[valKey]) - x(acc) - 1)).attr('height', bh).attr('rx', 3)
+          .attr('fill', dash.colors[ci % dash.colors.length])
+          .on('mousemove', (ev) => tip.show(ev, [catLabel(cat), S.reg(gr.region), S.fmt.eur(d[valKey]) + L(' par habitant', ' per inwoner')]))
+          .on('mouseleave', () => tip.hide());
+        acc += d[valKey];
+      });
+      svg.append('text').attr('x', x(acc) + 4).attr('y', yy + bh / 2).attr('dy', '0.35em').attr('fill', 'var(--color-fg-muted)').style('font-size', 'var(--cds-font-size-caption)').text(S.fmt.eur(acc));
+      yy += bh + gap;
+    });
+    order.cats.forEach((cat, ci) => { const s = document.createElement('span'); const sw = document.createElement('span'); sw.className = 'bc-sw'; sw.style.background = dash.colors[ci % dash.colors.length]; s.append(sw, catLabel(cat)); legend.appendChild(s); });
+  };
+
+  S.renderNatures = () => {
+    const box = document.getElementById('natures'), d = dash.data('natures_region');
+    if (d.status === 'error') return S.failed(box);
+    if (d.status !== 'ok') return;
+    const data = d.data.map((r) => ({ ...r, cat: r.sens + '|' + r.poste }));
+    const cats = ['Dépenses|Personnel', 'Dépenses|Fonctionnement', 'Dépenses|Transferts', 'Dépenses|Dette', 'Dépenses|Autres', 'Recettes|Fiscalité', 'Recettes|Dotations et subsides', 'Recettes|Prestations', 'Recettes|Autres'];
+    const catLabel = (c) => { const [s, p] = c.split('|'); return S.poste(s) + ' : ' + S.poste(p); };
+    stacked(box, document.getElementById('natures-legende'), data, 'cat', 'moyenne_hab', { groups: ['Dépenses', 'Recettes'], grpOf: (r) => r.sens, cats }, catLabel);
+  };
+
+  S.renderFonctions = () => {
+    const box = document.getElementById('fonctions'), d = dash.data('fonctions_region');
+    if (d.status === 'error') return S.failed(box);
+    if (d.status !== 'ok') return;
+    const cats = [...new Set(d.data.map((r) => r.fonction))].sort((a, b) => parseInt(a) - parseInt(b));
+    stacked(box, document.getElementById('fonctions-legende'), d.data, 'fonction', 'moyenne_hab', { groups: ['Dépenses'], cats }, S.fonction);
+  };
+
+  S.renderTable = () => {
+    const tb = document.querySelector('#classement tbody');
+    if (dash.data('communes').status !== 'ok') return;
+    const key = S.state.ind, q = S.state.search.trim().toLowerCase();
+    const rows = S.rows.filter((r) => inRegion(r) && (!q || r.commune.toLowerCase().includes(q) || (r.commune_nl || '').toLowerCase().includes(q)));
+    const sk = S.state.sort.key === 'ind' ? key : S.state.sort.key, dir = S.state.sort.dir;
+    const val = (r) => (sk === 'commune' ? S.name(r) : r[sk]);
+    rows.sort((a, b) => {
+      const va = val(a), vb = val(b);
+      if (va == null && vb == null) return 0; if (va == null) return 1; if (vb == null) return -1;
+      return (typeof va === 'string' ? va.localeCompare(vb, S.lang) : va - vb) * dir;
+    });
+    document.querySelectorAll('#classement th').forEach((th) => { const b = th.querySelector('button'); th.removeAttribute('aria-sort'); if (b && b.dataset.sort === S.state.sort.key) th.setAttribute('aria-sort', dir > 0 ? 'ascending' : 'descending'); });
+    tb.replaceChildren(...rows.map((r) => {
+      const tr = document.createElement('tr'); tr.dataset.key = r.nis;
+      if (r.nis === S.state.nis) tr.className = 'sel';
+      const td = (t, cls) => { const e = document.createElement('td'); e.textContent = t; if (cls) e.className = cls; return e; };
+      tr.append(td(S.name(r)), td(S.reg(r.region), 'hide-n'), td(S.fmt.n0(r.population), 'num'), td(S.fmtInd(key, r[key]), 'num'), td(S.statut(r.budget_statut), 'hide-n'));
+      return tr;
+    }));
+  };
+})();
+</script>
+
+<script>
+// ---------- ANALYSE D'UNE COMMUNE ----------
+(function () {
+  const S = window.BC;
+  const L = S.L;
+  const inp = document.getElementById('c-input'), list = document.getElementById('c-list');
+  const optLabel = (r) => S.name(r) + ' (' + S.reg(r.region) + ')';
+  inp.addEventListener('change', () => {
+    const v = inp.value.trim().toLowerCase();
+    const r = S.rows.find((x) => optLabel(x).toLowerCase() === v) || S.rows.find((x) => x.commune.toLowerCase() === v || (x.commune_nl || '').toLowerCase() === v);
+    if (r) S.select(r.nis);
+  });
+  document.getElementById('c-k').addEventListener('change', (e) => { S.state.k = Number(e.target.value); S.render(); });
+  document.querySelector('#c-pairs tbody').addEventListener('click', (e) => { const tr = e.target.closest('tr[data-key]'); if (tr) S.select(tr.dataset.key); });
+
+  // budget item -> structural indicators that may explain it
+  S.EXPLAIN = {
+    dep_personnel_hab: ['part_3_11_pct', 'part_0_2_pct', 'n_piscine', 'n_hall_sportif_par_10000_hab', 'population', 'sections_villages', 'n_theatre_centre_culturel', 'n_bibliotheque', 'ecoles_par_1000_enfants'],
+    dep_fonctionnement_hab: ['densite_hab_km2', 'km_voirie_locale_par_1000_hab', 'km_chemins_par_1000_hab', 'sections_villages', 'n_piscine', 'n_patinoire', 'batiments_avant_1946_pct', 'hebergements_par_1000_hab', 'horeca_par_1000_hab'],
+    dep_transferts_hab: ['taux_risque_pauvrete_pct', 'revenu_imposable_par_habitant', 'part_65p_pct', 'part_80p_pct', 'population', 'rc_economique_pct'],
+    police_hab: ['population', 'densite_hab_km2', 'horeca_par_1000_hab', 'rc_bureaux_commerces_pct', 'n_gare', 'hebergements_par_1000_hab'],
+    secours_hab: ['rc_industrie_stockage_pct', 'population', 'hebergements_par_1000_hab'],
+    cpas_hab: ['taux_risque_pauvrete_pct', 'revenu_imposable_par_habitant', 'part_80p_pct'],
+    dep_dette_hab: ['croissance_pop_2015_2025_pct', 'batiments_avant_1946_pct'],
+    rec_fiscalite_hab: ['revenu_imposable_par_habitant', 'revenu_cadastral_par_habitant', 'taux_implicite_additionnel_ipp_pct', 'rc_economique_pct'],
+    ipp_hab: ['revenu_imposable_par_habitant', 'taux_implicite_additionnel_ipp_pct', 'part_65p_pct'],
+    pri_hab: ['revenu_cadastral_par_habitant', 'revenu_cadastral_exonere_pct', 'rc_economique_pct'],
+    taxes_locales_hab: ['entreprises_par_1000_hab', 'rc_economique_pct', 'hebergements_par_1000_hab', 'horeca_par_1000_hab'],
+    rec_dotations_hab: ['revenu_imposable_par_habitant', 'population', 'taux_risque_pauvrete_pct'],
+    fonds_hab: ['revenu_imposable_par_habitant', 'population', 'densite_hab_km2'],
+    rec_prestations_hab: ['n_piscine', 'sol_bois_pct', 'hebergements_par_1000_hab'],
+  };
+  // [key, [fr, nl], sub-item]
+  S.DEP = [['dep_expl_hab', ['Total exploitation', 'Totaal exploitatie']], ['dep_personnel_hab', ['Personnel', 'Personeel']], ['dep_fonctionnement_hab', ['Fonctionnement', 'Werking']], ['dep_transferts_hab', ['Transferts', 'Overdrachten']],
+    ['police_hab', ['dont zone de police', 'waarvan politiezone'], 1], ['secours_hab', ['dont zone de secours', 'waarvan hulpverleningszone'], 1], ['cpas_hab', ['dont CPAS', 'waarvan OCMW'], 1], ['dep_dette_hab', ['Dette', 'Schuld']], ['dep_inv_hab', ['Investissements', 'Investeringen']]];
+  S.REC = [['rec_expl_hab', ['Total exploitation', 'Totaal exploitatie']], ['rec_fiscalite_hab', ['Fiscalité', 'Fiscaliteit']], ['ipp_hab', ['dont additionnels IPP', 'waarvan aanvullende personenbelasting'], 1], ['pri_hab', ['dont additionnels précompte', 'waarvan opcentiemen OV'], 1],
+    ['taxes_locales_hab', ['dont taxes locales', 'waarvan lokale belastingen'], 1], ['rec_dotations_hab', ['Dotations et subsides', 'Dotaties en subsidies']], ['fonds_hab', ['dont fonds des communes', 'waarvan gemeentefonds'], 1], ['rec_prestations_hab', ['Prestations', 'Prestaties']]];
+
+  // dot-and-range chart: commune vs peers' quartiles, optional simulated value
+  S.rangeChart = (box, items, opts) => {
+    const it = items.filter((d) => d.v != null || d.med != null);
+    if (!it.length) return S.empty(box, opts.empty);
+    box.replaceChildren();
+    const W = box.clientWidth || 500, rh = 30, m = { l: Math.min(210, W * 0.4), r: 70, t: 4, b: 24 };
+    const H = m.t + m.b + it.length * rh;
+    const mx = d3.max(it, (d) => Math.max(d.v || 0, d.p75 || 0, d.sim || 0)) || 1;
+    const x = d3.scaleLinear().domain([0, mx]).nice().range([m.l, W - m.r]);
+    const svg = d3.select(box).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+    svg.append('g').selectAll('line').data(x.ticks(5)).join('line').attr('x1', (d) => x(d)).attr('x2', (d) => x(d)).attr('y1', m.t).attr('y2', H - m.b).attr('stroke', 'var(--cds-chart-grid)');
+    svg.append('g').attr('transform', `translate(0,${H - m.b})`).call(d3.axisBottom(x).ticks(Math.max(3, Math.floor(W / 110))).tickFormat((v) => S.fmt.n0(v) + ' €')).call(S.axisClean);
+    const tip = S.tip(box);
+    it.forEach((d, i) => {
+      const y = m.t + i * rh + rh / 2;
+      const showSim = d.sim != null && Math.abs(d.sim - (d.v || 0)) > 0.5;
+      svg.append('text').attr('x', m.l - 8).attr('y', y).attr('dy', '0.35em').attr('text-anchor', 'end').attr('fill', d.sub ? 'var(--color-fg-muted)' : 'var(--color-fg)').style('font-size', 'var(--cds-font-size-caption)').text(d.lab);
+      if (d.p25 != null && d.p75 != null) svg.append('rect').attr('x', x(d.p25)).attr('y', y - 6).attr('width', Math.max(2, x(d.p75) - x(d.p25))).attr('height', 12).attr('rx', 4).attr('fill', 'var(--cds-chart-muted)').attr('fill-opacity', 0.45);
+      if (d.med != null) svg.append('line').attr('x1', x(d.med)).attr('x2', x(d.med)).attr('y1', y - 8).attr('y2', y + 8).attr('stroke', 'var(--color-fg-muted)').attr('stroke-width', 2);
+      let col = 'var(--color-fg)';
+      if (d.v != null && d.p75 != null && d.p25 != null) {
+        const high = d.v > d.p75, low = d.v < d.p25;
+        if (opts.sens === 'dep') col = high ? 'var(--cds-chart-status-critical)' : low ? 'var(--color-ok)' : 'var(--color-fg)';
+        else col = low ? 'var(--cds-chart-status-critical)' : high ? 'var(--color-ok)' : 'var(--color-fg)';
+      }
+      if (d.v != null) svg.append('circle').attr('cx', x(d.v)).attr('cy', y).attr('r', 5.5).attr('fill', col);
+      if (showSim) svg.append('path').attr('d', 'M0,-7L6,0L0,7L-6,0Z').attr('transform', `translate(${x(d.sim)},${y})`).attr('fill', 'none').attr('stroke', 'var(--color-fg)').attr('stroke-width', 1.5);
+      svg.append('text').attr('x', W - m.r + 6).attr('y', y).attr('dy', '0.35em').attr('fill', 'var(--color-fg-muted)').style('font-size', 'var(--cds-font-size-caption)').text(S.fmt.eur(showSim ? d.sim : d.v));
+      svg.append('rect').attr('x', 0).attr('y', y - rh / 2).attr('width', W).attr('height', rh).attr('fill', 'transparent')
+        .on('mousemove', (ev) => tip.show(ev, [d.lab,
+          L('Médiane des comparables : ', 'Mediaan vergelijkbare gemeenten: ') + S.fmt.eur(d.med) + ' (25-75 % : ' + S.fmt.n0(d.p25) + ' – ' + S.fmt.eur(d.p75) + ')',
+          L('Commune : ', 'Gemeente: ') + S.fmt.eur(d.v), ...(showSim ? [L('Simulation : ', 'Simulatie: ') + S.fmt.eur(d.sim)] : [])]))
+        .on('mouseleave', () => tip.hide());
+    });
+  };
+
+  S.compare = (c, peers, defs, sim) => defs.map(([k, lab, sub]) => {
+    const vals = peers.map((p) => p[k]).filter((v) => v != null).sort((a, b) => a - b);
+    const q = (p) => (vals.length ? d3.quantileSorted(vals, p) : null);
+    return { k, lab: Array.isArray(lab) ? lab[S.lang === 'nl' ? 1 : 0] : lab, sub: !!sub, v: c[k], med: q(0.5), p25: q(0.25), p75: q(0.75), n: vals.length, sim: sim ? sim.perHab[k] : null };
+  });
+
+  const nlOr = (s, k) => (S.lang === 'nl' && s[k + '_nl'] ? s[k + '_nl'] : s[k]);
+  const specItem = (s) => {
+    const d = document.createElement('div'); d.className = 'bc-spec-item';
+    const n = document.createElement('div'); n.className = 'bc-spec-name'; n.textContent = nlOr(s, 'specificite');
+    const meta = document.createElement('div'); meta.className = 'bc-spec-meta';
+    const ind = s.indicateur;
+    const hasMed = s.mediane_region != null && s.mediane_region !== '';
+    meta.textContent = (S.IND[ind] ? S.label(ind) + ' : ' : '') + S.fmtInd(ind, Number(s.valeur)) + (hasMed ? L(' · médiane régionale ', ' · gewestelijke mediaan ') + S.fmtInd(ind, Number(s.mediane_region)) : '');
+    d.append(n, meta);
+    if (s.percentile != null && s.percentile !== '') {
+      const bar = document.createElement('div'); bar.className = 'bc-pbar'; const dot = document.createElement('i');
+      dot.style.left = Number(s.percentile) + '%'; dot.style.background = 'var(--color-fg)'; bar.appendChild(dot); d.appendChild(bar);
+      const pm = document.createElement('div'); pm.className = 'bc-spec-meta'; pm.textContent = L('Rang régional : ', 'Gewestelijke rang: ') + S.fmt.n0(Number(s.percentile)) + ' / 100'; d.appendChild(pm);
+    }
+    const t = document.createElement('div'); t.className = 'bc-spec-txt'; t.textContent = nlOr(s, 'explication'); d.appendChild(t);
+    return d;
+  };
+
+  S.renderCommune = () => {
+    const cc = dash.data('communes');
+    if (cc.status !== 'ok') return;
+    if (!list.options.length || list.dataset.lang !== S.lang) {
+      list.dataset.lang = S.lang;
+      list.replaceChildren(...S.rows.slice().sort((a, b) => S.name(a).localeCompare(S.name(b), S.lang)).map((r) => new Option(optLabel(r))));
+    }
+    const c = S.byNis.get(S.state.nis) || S.rows[0];
+    if (document.activeElement !== inp) inp.value = optLabel(c);
+    const where = 'nis=' + c.nis;
+    const badges = document.getElementById('c-badges'); badges.replaceChildren();
+    const pill = (t, cls) => { const s = document.createElement('span'); s.className = 'bc-pill ' + (cls || ''); s.textContent = t; badges.appendChild(s); };
+    pill(S.reg(c.region)); pill(S.prov(c) || '');
+    pill(c.budget_statut === 'fiable' ? (c.budget_ventile ? L('Budget détaillé', 'Gedetailleerde begroting') : L('Budget en totaux', 'Begroting in totalen')) : c.budget_statut === 'faible' ? L('Budget peu fiable', 'Weinig betrouwbare begroting') : L('Budget 2026 non trouvé', 'Begroting 2026 niet gevonden'), c.budget_statut === 'fiable' ? 'ok' : c.budget_statut === 'faible' ? 'warn' : 'bad');
+    if (S.simActive() && S.sim.nis === c.nis) pill(L('Simulation en cours', 'Simulatie actief'), 'warn');
+    document.getElementById('c-source').textContent = c.budget_source
+      ? L('Source du budget : ', 'Bron van de begroting: ') + c.budget_source + (c.budget_fiabilite ? L(' · fiabilité ', ' · betrouwbaarheid ') + c.budget_fiabilite : '')
+      : L('Aucun budget 2026 exploitable : seules les spécificités structurelles sont affichées.', 'Geen bruikbare begroting 2026: enkel de structurele kenmerken worden getoond.');
+
+    const peers = S.peers(S.rows, c);
+    const sim = S.simActive() && S.sim.nis === c.nis ? S.simulate(c) : null;
+    const med = (k) => S.median(peers.map((p) => p[k]).filter((v) => v != null));
+    [['c-pop', 'population', S.fmt.n0], ['c-dep', 'dep_expl_hab', S.fmt.eur], ['c-rec', 'rec_expl_hab', S.fmt.eur], ['c-inv', 'dep_inv_hab', S.fmt.eur]].forEach(([id, k, f]) => {
+      const el = document.getElementById(id); el.dataset.where = where; el.textContent = f(c[k]);
+    });
+    document.getElementById('c-pop-note').textContent = S.fmt.n1(c.superficie_km2) + ' km² · ' + S.fmtInd('densite_hab_km2', c.densite_hab_km2);
+    const note = (k) => {
+      const m = med(k);
+      if (c[k] == null || m == null) return L('pas de comparaison possible', 'geen vergelijking mogelijk');
+      const d = c[k] - m;
+      return L('comparables : ', 'vergelijkbaar: ') + S.fmt.eur(m) + ' (' + (d >= 0 ? '+' : '−') + S.fmt.n0(Math.abs(100 * d / m)) + ' %)' + (sim && sim.perHab[k] != null ? L(' · simulé ', ' · gesimuleerd ') + S.fmt.eur(sim.perHab[k]) : '');
+    };
+    document.getElementById('c-dep-note').textContent = note('dep_expl_hab');
+    document.getElementById('c-rec-note').textContent = note('rec_expl_hab');
+    document.getElementById('c-inv-note').textContent = note('dep_inv_hab');
+
+    // specificities
+    const box = document.getElementById('c-spec'); box.replaceChildren();
+    const sd = dash.data('specificites');
+    const specs = sd.status === 'ok' ? sd.data.filter((s) => String(s.nis) === c.nis) : [];
+    if (sd.status === 'error') S.failed(box);
+    else if (sd.status === 'ok') {
+      [[L('Pressions à la dépense', 'Druk op de uitgaven'), (s) => s.domaine !== 'Budget 2026' && s.effet_depenses === 'hausse', 'bad'],
+        [L('Atouts pour les recettes', 'Troeven voor de ontvangsten'), (s) => s.domaine !== 'Budget 2026' && s.effet_recettes === 'hausse', 'ok'],
+        [L('Freins aux recettes', 'Remmen op de ontvangsten'), (s) => s.domaine !== 'Budget 2026' && s.effet_recettes === 'baisse', 'warn'],
+        [L('Observations sur le budget 2026', 'Vaststellingen over de begroting 2026'), (s) => s.domaine === 'Budget 2026', '']].forEach(([t, f, cls]) => {
+        const items = specs.filter(f);
+        const col = document.createElement('div'); col.className = 'bc-spec-col';
+        const h = document.createElement('h3'); h.textContent = t; const n = document.createElement('span'); n.className = 'bc-pill ' + cls; n.textContent = String(items.length); h.appendChild(n); col.appendChild(h);
+        if (!items.length) { const p = document.createElement('p'); p.className = 'bc-empty'; p.textContent = L('Rien de marquant par rapport aux autres communes de la région.', 'Niets opvallends tegenover de andere gemeenten van het gewest.'); col.appendChild(p); }
+        items.sort((a, b) => Math.abs(50 - Number(b.percentile || 50)) - Math.abs(50 - Number(a.percentile || 50))).forEach((s) => col.appendChild(specItem(s)));
+        box.appendChild(col);
+      });
+    }
+
+    // peers controls + table
+    const dims = document.getElementById('c-dims');
+    if (!dims.children.length) Object.keys(S.DIMS).forEach((k) => {
+      const b = document.createElement('button'); b.className = 'bc-btn'; b.dataset.dim = k;
+      b.addEventListener('click', () => { const i = S.state.dims.indexOf(k); if (i >= 0) S.state.dims.splice(i, 1); else S.state.dims.push(k); S.render(); });
+      dims.appendChild(b);
+    });
+    [...dims.children].forEach((b) => { b.textContent = S.DIMS[b.dataset.dim][0][S.lang === 'nl' ? 1 : 0]; b.setAttribute('aria-pressed', String(S.state.dims.includes(b.dataset.dim))); });
+    document.getElementById('c-k').value = String(S.state.k);
+    const tb = document.querySelector('#c-pairs tbody');
+    const td = (t, cls) => { const e = document.createElement('td'); e.textContent = t; if (cls) e.className = cls; return e; };
+    const prow = (r, sel) => { const tr = document.createElement('tr'); tr.dataset.key = r.nis; if (sel) tr.className = 'sel'; tr.append(td(S.name(r)), td(S.fmt.n0(r.population), 'num'), td(S.fmt.eur(r.revenu_imposable_par_habitant), 'num hide-n'), td(S.fmt.n0(r.densite_hab_km2), 'num hide-n'), td(S.fmt.eur(r.dep_expl_hab), 'num'), td(S.fmt.eur(r.rec_expl_hab), 'num')); return tr; };
+    tb.replaceChildren(prow(c, true), ...peers.map((r) => prow(r)));
+
+    // comparisons
+    const depItems = S.compare(c, peers, S.DEP, sim), recItems = S.compare(c, peers, S.REC, sim);
+    const noBudget = c.budget_statut !== 'fiable';
+    const noTxt = L('Pas de budget 2026 exploitable pour cette commune.', 'Geen bruikbare begroting 2026 voor deze gemeente.');
+    S.safe([
+      () => S.rangeChart(document.getElementById('c-dep-chart'), noBudget ? [] : depItems, { sens: 'dep', empty: noTxt }),
+      () => S.rangeChart(document.getElementById('c-rec-chart'), noBudget ? [] : recItems, { sens: 'rec', empty: noTxt }),
+    ]);
+
+    // diagnostic
+    const diag = document.getElementById('c-diag'); diag.replaceChildren();
+    const totalsOnly = L("Le budget n'est disponible qu'en totaux.", 'De begroting is enkel in totalen beschikbaar.');
+    const block = (title, items, empty) => {
+      const col = document.createElement('div'); col.className = 'bc-spec-col';
+      const h = document.createElement('h3'); h.textContent = title; col.appendChild(h);
+      if (!items.length) { const p = document.createElement('p'); p.className = 'bc-empty'; p.textContent = empty; col.appendChild(p); }
+      const ul = document.createElement('ul'); ul.className = 'bc-diag';
+      items.forEach((d) => {
+        const li = document.createElement('li');
+        const b = document.createElement('strong'); b.textContent = d.lab + ' : ' + S.fmt.signedEur(d.gapTot) + L(' par an', ' per jaar');
+        li.append(b, document.createTextNode(' (' + S.fmt.eur(d.v) + L(' / hab. contre ', ' / inw. tegenover ') + S.fmt.eur(d.med) + L(' chez les comparables).', ' bij vergelijkbare gemeenten).')));
+        const ex = specs.filter((s) => (S.EXPLAIN[d.k] || []).includes(s.indicateur) && s.domaine !== 'Budget 2026');
+        if (ex.length) { const e = document.createElement('div'); e.className = 'bc-spec-txt'; e.textContent = L('Explications possibles : ', 'Mogelijke verklaringen: ') + ex.map((s) => nlOr(s, 'specificite').toLowerCase()).join(', ') + '.'; li.appendChild(e); }
+        ul.appendChild(li);
+      });
+      col.appendChild(ul); diag.appendChild(col);
+    };
+    const dn = document.getElementById('c-diag-note');
+    if (noBudget) { dn.textContent = ''; S.empty(diag, L("Pas de budget 2026 exploitable : le diagnostic budgétaire n'est pas possible.", 'Geen bruikbare begroting 2026: een begrotingsdiagnose is niet mogelijk.')); }
+    else {
+      const det = (items) => items.filter((d) => !['dep_expl_hab', 'rec_expl_hab', 'dep_inv_hab'].includes(d.k) && d.v != null && d.med != null && d.n >= 3).map((d) => ({ ...d, gapTot: (d.v - d.med) * c.population }));
+      block(L('Dépense plus que les comparables', 'Geeft meer uit dan vergelijkbare gemeenten'), det(depItems).filter((d) => d.v > d.p75).sort((a, b) => b.gapTot - a.gapTot).slice(0, 4), c.budget_ventile ? L('Aucun poste au-dessus de 75 % des communes comparables.', 'Geen enkele post boven 75 % van de vergelijkbare gemeenten.') : totalsOnly);
+      block(L('Perçoit moins que les comparables', 'Ontvangt minder dan vergelijkbare gemeenten'), det(recItems).filter((d) => d.v < d.p25).sort((a, b) => a.gapTot - b.gapTot).slice(0, 4), c.budget_ventile ? L('Aucune recette sous 25 % des communes comparables.', 'Geen enkele ontvangst onder 25 % van de vergelijkbare gemeenten.') : totalsOnly);
+      block(L('Perçoit plus que les comparables', 'Ontvangt meer dan vergelijkbare gemeenten'), det(recItems).filter((d) => d.v > d.p75).sort((a, b) => b.gapTot - a.gapTot).slice(0, 3), c.budget_ventile ? L('Aucune recette au-dessus de 75 % des communes comparables.', 'Geen enkele ontvangst boven 75 % van de vergelijkbare gemeenten.') : totalsOnly);
+      const tot = depItems[0];
+      dn.textContent = tot.med != null
+        ? L(`Dépenses d'exploitation : ${S.fmt.eur(c.dep_expl_hab)} par habitant, contre ${S.fmt.eur(tot.med)} pour la médiane de ${peers.length} communes comparables (${S.fmt.signedEur((c.dep_expl_hab - tot.med) * c.population)} par an). Un poste est signalé quand il dépasse 75 % des comparables (ou passe sous 25 % pour une recette).`,
+          `Exploitatie-uitgaven: ${S.fmt.eur(c.dep_expl_hab)} per inwoner, tegenover ${S.fmt.eur(tot.med)} voor de mediaan van ${peers.length} vergelijkbare gemeenten (${S.fmt.signedEur((c.dep_expl_hab - tot.med) * c.population)} per jaar). Een post wordt gemeld als hij boven 75 % van de vergelijkbare gemeenten ligt (of onder 25 % voor een ontvangst).`)
+        : L('Écart à la médiane des communes comparables, multiplié par la population.', 'Verschil met de mediaan van de vergelijkbare gemeenten, vermenigvuldigd met de bevolking.');
+    }
+
+    // functions
+    const fb = document.getElementById('c-fonc-chart');
+    const fd = dash.data('fonctions');
+    if (fd.status === 'error') S.failed(fb);
+    else if (fd.status === 'ok') {
+      const mine = new Map(fd.data.filter((f) => String(f.nis) === c.nis).map((f) => [f.fonction, Number(f.dep_hab)]));
+      const pset = new Set(peers.map((p) => p.nis));
+      const pf = fd.data.filter((f) => pset.has(String(f.nis)));
+      const has = new Set(pf.map((f) => String(f.nis)));
+      const fns = [...new Set([...mine.keys(), ...pf.map((f) => f.fonction)])].sort((a, b) => parseInt(a) - parseInt(b));
+      const items = fns.map((fn) => {
+        const vals = peers.filter((p) => has.has(p.nis)).map((p) => { const r = pf.find((f) => String(f.nis) === p.nis && f.fonction === fn); return r ? Number(r.dep_hab) : 0; }).sort((a, b) => a - b);
+        const q = (p) => (vals.length ? d3.quantileSorted(vals, p) : null);
+        return { k: fn, lab: S.fonction(fn), v: mine.size ? (mine.get(fn) || 0) : null, med: q(0.5), p25: q(0.25), p75: q(0.75) };
+      });
+      document.getElementById('c-fonc-note').textContent = mine.size
+        ? L('Euros par habitant. Rouge : au-dessus de 75 % des communes comparables ; vert : sous 25 %.', 'Euro per inwoner. Rood: boven 75 % van de vergelijkbare gemeenten; groen: onder 25 %.')
+        : L("Le budget de cette commune n'est pas ventilé par fonction.", 'De begroting van deze gemeente is niet opgesplitst naar functie.');
+      S.safe([() => S.rangeChart(fb, mine.size ? items : [], { sens: 'dep', empty: L('Pas de ventilation par fonction pour cette commune.', 'Geen opsplitsing naar functie voor deze gemeente.') })]);
+    }
+    S.safe([() => S.renderProfil(c, peers)]);
+  };
+
+  S.PROFIL = ['population', 'densite_hab_km2', 'croissance_pop_2015_2025_pct', 'part_0_2_pct', 'part_3_11_pct', 'part_65p_pct', 'part_80p_pct', 'revenu_imposable_par_habitant', 'taux_risque_pauvrete_pct', 'taux_implicite_additionnel_ipp_pct', 'revenu_cadastral_par_habitant', 'rc_economique_pct', 'entreprises_par_1000_hab', 'horeca_par_1000_hab', 'sections_villages', 'km_voirie_locale_par_1000_hab', 'batiments_avant_1946_pct', 'sol_bois_pct'];
+  S.renderProfil = (c, peers) => {
+    const box = document.getElementById('c-profil'); box.replaceChildren();
+    const keys = S.PROFIL.filter((k) => S.rows.some((r) => r[k] != null));
+    const W = box.clientWidth || 600, rh = 22, m = { l: Math.min(250, W * 0.44), r: 80, t: 4, b: 24 };
+    const H = m.t + m.b + keys.length * rh;
+    const x = d3.scaleLinear().domain([0, 100]).range([m.l, W - m.r]);
+    const svg = d3.select(box).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+    svg.append('g').selectAll('line').data([0, 25, 50, 75, 100]).join('line').attr('x1', (d) => x(d)).attr('x2', (d) => x(d)).attr('y1', m.t).attr('y2', H - m.b).attr('stroke', (d) => (d === 50 ? 'var(--cds-chart-reference)' : 'var(--cds-chart-grid)'));
+    svg.append('g').attr('transform', `translate(0,${H - m.b})`).call(d3.axisBottom(x).tickValues([0, 25, 50, 75, 100])).call(S.axisClean);
+    const tip = S.tip(box);
+    keys.forEach((k, i) => {
+      const y = m.t + i * rh + rh / 2;
+      svg.append('text').attr('x', m.l - 8).attr('y', y).attr('dy', '0.35em').attr('text-anchor', 'end').attr('fill', 'var(--color-fg)').style('font-size', 'var(--cds-font-size-caption)').text(S.label(k));
+      peers.forEach((p) => { const pp = S.pct(S.rows, k, p); if (pp != null) svg.append('line').attr('x1', x(pp)).attr('x2', x(pp)).attr('y1', y - 5).attr('y2', y + 5).attr('stroke', 'var(--cds-chart-muted)').attr('stroke-width', 1.5); });
+      const pc = S.pct(S.rows, k, c);
+      if (pc != null) {
+        svg.append('circle').attr('cx', x(pc)).attr('cy', y).attr('r', 5.5).attr('fill', dash.colors[0]);
+        svg.append('text').attr('x', W - m.r + 6).attr('y', y).attr('dy', '0.35em').attr('fill', 'var(--color-fg-muted)').style('font-size', 'var(--cds-font-size-caption)').text(S.fmtInd(k, c[k]));
+      }
+      svg.append('rect').attr('x', 0).attr('y', y - rh / 2).attr('width', W).attr('height', rh).attr('fill', 'transparent')
+        .on('mousemove', (ev) => tip.show(ev, [S.label(k), S.name(c) + ' : ' + S.fmtInd(k, c[k]) + (pc != null ? ' (rang ' + S.fmt.n0(pc) + ' / 100)' : ''), L('Médiane des comparables : ', 'Mediaan vergelijkbare gemeenten: ') + S.fmtInd(k, S.median(peers.map((p) => p[k]).filter((v) => v != null)))]))
+        .on('mouseleave', () => tip.hide());
+    });
+  };
+})();
+</script>
+
+<script>
+// ---------- SIMULATION ----------
+(function () {
+  const S = window.BC;
+  const L = S.L;
+  const levBox = document.getElementById('s-levers'), linesBox = document.getElementById('s-lines');
+  document.getElementById('s-goto').addEventListener('click', () => S.showTab('commune'));
+  document.getElementById('s-reset').addEventListener('click', () => { S.sim = { nis: S.state.nis, lev: {}, lines: [] }; S.buildLevers(true); S.buildLines(); S.render(); });
+  document.getElementById('s-addline').addEventListener('click', () => { S.sim.lines.push({ libelle: '', sens: 'dep', montant: '' }); S.buildLines(); });
+  document.getElementById('s-presets').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-preset]'); if (!b) return;
+    const c = S.byNis.get(S.state.nis); if (!c) return;
+    S.sim.nis = c.nis;
+    const p = b.dataset.preset, add = (k, v) => { S.sim.lev[k] = (Number(S.sim.lev[k]) || 0) + v; };
+    if (p === 'index') { if (c.budget_ventile) add('personnel', 2); else add('dep_tot', 1); }
+    if (p === 'energie') { if (c.budget_ventile) add('fonctionnement', 5); else add('dep_tot', 0.8); }
+    if (p === 'police' && c.budget_ventile) add('police', 5);
+    if (p === 'piscine') {
+      S.sim.lines.push({ libelle: L('Piscine : personnel, énergie, entretien (hypothèse)', 'Zwembad: personeel, energie, onderhoud (hypothese)'), sens: 'dep', montant: 900000 });
+      S.sim.lines.push({ libelle: L('Piscine : entrées et abonnements (hypothèse)', 'Zwembad: toegangen en abonnementen (hypothese)'), sens: 'rec', montant: 300000 });
+    }
+    if (p === 'pairs') {
+      const peers = S.peers(S.rows, c);
+      const defs = c.budget_ventile ? [['personnel', 'dep_personnel_hab'], ['fonctionnement', 'dep_fonctionnement_hab'], ['transferts', 'dep_transferts_hab'], ['dette', 'dep_dette_hab']] : [['dep_tot', 'dep_expl_hab']];
+      defs.forEach(([lev, k]) => { const m = S.median(peers.map((x) => x[k]).filter((v) => v != null)); if (m != null && c[k] > m) S.sim.lev[lev] = Math.round(1000 * (m / c[k] - 1)) / 10; });
+    }
+    S.buildLevers(true); S.buildLines(); S.render();
+  });
+
+  S.buildLevers = (force) => {
+    const c = S.byNis.get(S.state.nis); if (!c) return;
+    const defs = c.budget_ventile ? S.LEVERS : S.LEVERS_TOTAL;
+    const sig = c.nis + (c.budget_ventile ? 'v' : 't') + S.lang;
+    if (!force && levBox.dataset.sig === sig) return;
+    levBox.dataset.sig = sig;
+    levBox.replaceChildren(...defs.filter(([, , , k]) => !k || c[k] != null).map(([key, lab, unit, base]) => {
+      const l = document.createElement('label'); l.className = 'bc-lever';
+      const t = document.createElement('span'); t.textContent = lab[S.lang === 'nl' ? 1 : 0];
+      const i = document.createElement('input'); i.type = 'number'; i.id = 'lev-' + key; i.step = unit === 'taux' ? '0.1' : '0.5';
+      i.value = S.sim.lev[key] != null ? S.sim.lev[key] : (unit === 'taux' ? (c.taux_implicite_additionnel_ipp_pct != null ? Math.round(c.taux_implicite_additionnel_ipp_pct * 100) / 100 : '') : 0);
+      i.addEventListener('input', () => { S.sim.nis = c.nis; S.sim.lev[key] = i.value === '' ? null : Number(i.value); S.renderSimulation(true); });
+      const bs = document.createElement('span'); bs.className = 'base';
+      bs.textContent = unit === 'taux'
+        ? L('taux actuel ≈ ', 'huidig tarief ≈ ') + S.fmt.n2(c.taux_implicite_additionnel_ipp_pct) + ' % · ' + S.fmt.eurc((c.ipp_hab || 0) * c.population)
+        : L('variation en % · base ', 'wijziging in % · basis ') + (base ? S.fmt.eurc(c[base] * c.population) : S.fmtInd('population', c.population));
+      l.append(t, i, bs); return l;
+    }));
+  };
+  S.buildLines = () => {
+    linesBox.replaceChildren(...S.sim.lines.map((ln, idx) => {
+      const d = document.createElement('div'); d.className = 'bc-line';
+      const t = document.createElement('input'); t.type = 'text'; t.id = 'line-lib-' + idx; t.placeholder = L('Libellé', 'Omschrijving'); t.value = ln.libelle; t.setAttribute('aria-label', L('Libellé', 'Omschrijving'));
+      t.addEventListener('input', () => { ln.libelle = t.value; S.renderSimulation(true); });
+      const s = document.createElement('select'); s.id = 'line-sens-' + idx; s.setAttribute('aria-label', 'Type'); s.append(new Option(L('Dépense', 'Uitgave'), 'dep'), new Option(L('Recette', 'Ontvangst'), 'rec')); s.value = ln.sens;
+      s.addEventListener('change', () => { ln.sens = s.value; S.renderSimulation(true); });
+      const m = document.createElement('input'); m.type = 'number'; m.id = 'line-mt-' + idx; m.step = '1000'; m.placeholder = L('Montant €', 'Bedrag €'); m.value = ln.montant; m.setAttribute('aria-label', L('Montant annuel en euros', 'Jaarbedrag in euro'));
+      m.addEventListener('input', () => { ln.montant = m.value; S.sim.nis = S.state.nis; S.renderSimulation(true); });
+      const x = document.createElement('button'); x.className = 'bc-btn'; x.textContent = L('Retirer', 'Verwijderen');
+      x.addEventListener('click', () => { S.sim.lines.splice(idx, 1); S.buildLines(); S.renderSimulation(true); });
+      d.append(t, s, m, x); return d;
+    }));
+  };
+
+  S.renderSimulation = (fromInput) => {
+    if (dash.data('communes').status !== 'ok') return;
+    const c = S.byNis.get(S.state.nis); if (!c) return;
+    if (S.sim.nis !== c.nis) { S.sim = { nis: c.nis, lev: {}, lines: [] }; S.buildLevers(true); S.buildLines(); }
+    if (!fromInput) { S.buildLevers(false); if (linesBox.children.length !== S.sim.lines.length || S.langChanged) S.buildLines(); }
+    document.getElementById('s-commune').textContent = S.name(c) + ' (' + S.reg(c.region) + ')';
+    const tb = document.querySelector('#s-table tbody');
+    const ok = c.budget_statut === 'fiable' && c.dep_expl_hab != null;
+    document.getElementById('s-note').textContent = ok
+      ? (c.budget_ventile
+        ? L("Les montants de départ sont ceux du budget 2026 (exploitation, exercice propre). La simulation s'affiche aussi sur la page Analyse d'une commune.", 'De startbedragen zijn die van de begroting 2026 (exploitatie, eigen dienstjaar). De simulatie verschijnt ook op de pagina Analyse van een gemeente.')
+        : L("Ce budget n'est disponible qu'en totaux : seuls les leviers globaux et les lignes ajoutées sont proposés.", 'Deze begroting is enkel in totalen beschikbaar: alleen de globale hefbomen en toegevoegde lijnen zijn beschikbaar.'))
+      : L('Pas de budget 2026 exploitable pour cette commune : choisissez-en une autre.', 'Geen bruikbare begroting 2026 voor deze gemeente: kies een andere.');
+    if (!ok) { tb.replaceChildren(); ['s-solde0', 's-solde1', 's-dep1', 's-rec1'].forEach((id) => { document.getElementById(id).textContent = '—'; }); document.getElementById('s-chart').replaceChildren(); return; }
+    const r = S.simulate(c);
+    const td = (t, cls) => { const e = document.createElement('td'); e.textContent = t; if (cls) e.className = cls; return e; };
+    const dcell = (d, s) => { const good = s === 'dep' ? d < 0 : d > 0; return td(Math.abs(d) < 1 ? '—' : S.fmt.signedEur(d), 'num bc-delta ' + (Math.abs(d) < 1 ? '' : good ? 'pos' : 'neg')); };
+    const rowsOut = r.rows.map((x) => { const tr = document.createElement('tr'); tr.append(td((x.s === 'dep' ? L('Dépense · ', 'Uitgave · ') : L('Recette · ', 'Ontvangst · ')) + x.lab), td(S.fmt.eurc(x.v0), 'num'), td(S.fmt.eurc(x.v1), 'num'), dcell(x.v1 - x.v0, x.s)); return tr; });
+    const tot = (lab, a, b, s) => { const tr = document.createElement('tr'); tr.className = 'sel'; tr.append(td(lab), td(S.fmt.eurc(a), 'num'), td(S.fmt.eurc(b), 'num'), dcell(b - a, s)); return tr; };
+    tb.replaceChildren(...rowsOut, tot(L('Total dépenses', 'Totaal uitgaven'), r.dep0, r.dep1, 'dep'), tot(L('Total recettes', 'Totaal ontvangsten'), r.rec0, r.rec1, 'rec'), tot(L('Solde', 'Saldo'), r.rec0 - r.dep0, r.rec1 - r.dep1, 'rec'));
+    const s0 = r.rec0 - r.dep0, s1 = r.rec1 - r.dep1;
+    document.getElementById('s-solde0').textContent = S.fmt.signedEur(s0);
+    document.getElementById('s-solde1').textContent = S.fmt.signedEur(s1);
+    const sd = document.getElementById('s-solde-delta'); sd.textContent = L('écart ', 'verschil ') + S.fmt.signedEur(s1 - s0) + L(' par an', ' per jaar'); sd.className = 'bc-tile-note bc-delta ' + (s1 - s0 > 0.5 ? 'pos' : s1 - s0 < -0.5 ? 'neg' : '');
+    const peers = S.peers(S.rows, c);
+    const md = S.median(peers.map((p) => p.dep_expl_hab).filter((v) => v != null)), mr = S.median(peers.map((p) => p.rec_expl_hab).filter((v) => v != null));
+    document.getElementById('s-dep1').textContent = S.fmt.eur(r.dep1 / r.pop1);
+    document.getElementById('s-dep-note').textContent = L('budget ', 'begroting ') + S.fmt.eur(r.dep0 / r.pop0) + L(' · comparables ', ' · vergelijkbaar ') + S.fmt.eur(md);
+    document.getElementById('s-rec1').textContent = S.fmt.eur(r.rec1 / r.pop1);
+    document.getElementById('s-rec-note').textContent = L('budget ', 'begroting ') + S.fmt.eur(r.rec0 / r.pop0) + L(' · comparables ', ' · vergelijkbaar ') + S.fmt.eur(mr);
+    const defs = c.budget_ventile
+      ? [['dep_expl_hab', ['Dépenses : total', 'Uitgaven: totaal']], ...S.DEP.slice(1).filter(([k]) => k !== 'dep_inv_hab'), ['rec_expl_hab', ['Recettes : total', 'Ontvangsten: totaal']], ...S.REC.slice(1)]
+      : [['dep_expl_hab', ["Dépenses d'exploitation", 'Exploitatie-uitgaven']], ['rec_expl_hab', ["Recettes d'exploitation", 'Exploitatie-ontvangsten']]];
+    S.safe([() => S.rangeChart(document.getElementById('s-chart'), S.compare(c, peers, defs, S.simActive() ? r : null), { sens: 'dep', empty: '—' })]);
+  };
+})();
+</script>
+
+<p class="site-foot">Sources / Bronnen : Statbel, OpenStreetMap, Agentschap Binnenlands Bestuur (BBC), Bruxelles Pouvoirs Locaux, budgets publiés par les communes wallonnes. Données compilées automatiquement, non validées officiellement / Automatisch samengestelde gegevens, niet officieel gevalideerd.</p>
+</div>
+</body>
+</html>
